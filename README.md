@@ -25,6 +25,7 @@ Android 7.0 / API 24 vagy újabb szükséges. Nincs `maxSdkVersion`. Az első in
 | Room | 2.7.2 |
 | WorkManager | 2.10.3 |
 | Gson | 2.13.2 |
+| AndroidX Test / JUnit / UI Automator | 1.7.0 / 1.3.0 / 2.3.0 |
 | Desugaring | 2.1.5 |
 | minSdk / compileSdk / targetSdk | 24 / 37 / 37 |
 | SDK Platform / Build Tools | Android 37.0 / 37.0.0 |
@@ -77,6 +78,8 @@ $env:PIXELGOTCHI_KEY_ALIAS="pixelgotchi"
 $env:PIXELGOTCHI_KEY_PASSWORD="a-sajat-kulcsjelszavad"
 .\gradlew.bat assembleRelease
 ```
+
+A CI debug-aláírókulcsa futásonként változhat. Tartós, mentésvesztés nélküli kiadási frissítésekhez saját, megőrzött release-kulcsot használj.
 
 A kulcsot és jelszavakat ne commitold. CI-ben csak védett secretsből add át őket. Környezeti változók nélkül a release aláíratlan marad; a debug változat a fejlesztői kulccsal automatikusan aláíródik. Nyilvános, tartós kiadáshoz saját release kulcs ajánlott.
 

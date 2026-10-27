@@ -5,7 +5,7 @@ A végleges futási eredményeket a GitHub Actions futása és a hozzá csatolt 
 ## Automatizált készlet
 
 - JVM: gondozási műveletek és időzítőmaradékok, 8 órás túlélés, 48 órás elhanyagolás, 19:36 ébrenléti halál, egyhetes távollét gyors feldolgozása, egyben/perces/véletlen darabolás azonossága, éjszakai védelem, gyógyszer és takarítás különbsége, egészséges állat gyógyszere, stabil felépülés, valódi szükséglet és tanítás, egyszeri játékreward és megszakítás, egyszeri gondozási hiba, tojás keltetése, profilok elkülönítése, természetes halál, hét fejlődési ág, következő napi napirend, téli időszámítás és monoton/UTC óravisszaállítás.
-- Android: valódi Room újranyitása és ékezetes adat, idempotens emlékalbum, valódi v1→v2 migráció adatvesztés nélkül, egyidejű UI/háttérműveletek, régi állat műveletének elutasítása, értesítések nélkül is bekövetkező halál, el nem indított profil védelme, Compose névadás és Activity-rekreáció/forgatás.
+- Android: valódi Room újranyitása és ékezetes adat, idempotens emlékalbum, valódi v1→v2 migráció adatvesztés nélkül, egyidejű UI/háttérműveletek, régi állat műveletének elutasítása, értesítések nélkül is bekövetkező halál, el nem indított profil védelme, UI Automator névadás, valódi etetés/takarítás/gyógyítás és Activity-rekreáció/forgatás.
 - Build: debug APK, aláíratlan release APK, Android teszt-APK, Android lint.
 
 ## Android-verziók és eszközök

@@ -38,7 +38,7 @@ class UiTest {
     }
     @Test fun profilesNamingCareControlsAndRotation() {
         runBlocking { repo.erase() }
-        tap(By.desc("Lili profilja"));tap(By.text("Pötyi"));tap(By.text("Jöhet a tojás!"))
+        tap(By.descContains("Lili profilja"));tap(By.text("Pötyi"));tap(By.text("Jöhet a tojás!"))
         await { repo.state.value?.profiles?.get("Lili")!=null }
         tap(By.text("Értem"))
         val id=repo.state.value!!.profiles["Lili"]!!.id
