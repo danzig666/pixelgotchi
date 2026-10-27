@@ -6,6 +6,8 @@ Magyar, teljesen offline Android-pixelállatjáték. Két külön profil, saját
 
 ## Telepítés
 
+**[A kész APK letöltése](https://github.com/danzig666/pixelgotchi/releases/download/v1.0.0/pixelgotchi-debug.apk)** · **[Teljes projekt ZIP](https://github.com/danzig666/pixelgotchi/releases/download/v1.0.0/pixelgotchi-source.zip)** · **[Képernyőképek](https://github.com/danzig666/pixelgotchi/releases/tag/v1.0.0)**
+
 A GitHub **Actions → Android APK → sikeres futás → Artifacts → pixelgotchi-apk-and-reports** csomagban található az `app-debug.apk`. Ez **debug-aláírású, valóban telepíthető APK**, személyes használatra. A ZIP-et előbb bontsd ki. Androidon engedélyezd az APK-t megnyitó alkalmazás számára az ismeretlen alkalmazások telepítését. A release `app-release-unsigned.apk` aláírás előtt nem telepíthető.
 
 Android 7.0 / API 24 vagy újabb szükséges. Nincs `maxSdkVersion`. Az első indítás is internet nélkül teljes. A fájlok a telefon helyi, privát alkalmazáskönyvtárába kerülnek; másik telefonon külön játék indul.

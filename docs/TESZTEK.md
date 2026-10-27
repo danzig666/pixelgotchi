@@ -12,7 +12,7 @@ A végleges futási eredményeket a GitHub Actions futása és a hozzá csatolt 
 
 | Android | API | Telepítés / indítás / gondozás |
 |---|---|---|
-| 7.0 | 24 | Kiemelt GitHub emulátoros teszt |
+| 7.0 | 24 | **Sikeres: 6/6 teszt, telepítés, indítás, gondozás, rekreáció és forgatás** |
 | 7.1 | 25 | Tervezett, külön emulátoros kézi próba szükséges |
 | 8.0 | 26 | Tervezett, külön emulátoros kézi próba szükséges |
 | 8.1 | 27 | Tervezett, külön emulátoros kézi próba szükséges |
@@ -25,7 +25,7 @@ A végleges futási eredményeket a GitHub Actions futása és a hozzá csatolt 
 | 14 | 34 | Tervezett, külön emulátoros kézi próba szükséges |
 | 15 | 35 | Tervezett, force-stop és újraindítás próbája szükséges |
 | 16 | 36 | Tervezett, külön emulátoros kézi próba szükséges |
-| 17 | 37 | Kiemelt GitHub emulátoros teszt |
+| 17 | 37 | **Sikeres: 6/6 teszt, telepítés, indítás, gondozás, rekreáció és forgatás** |
 
 A GitHub workflow Nexus 7 profilú API 24/37 x86_64 emulátort indít. A tényleges eredmény a megfelelő futásban ellenőrizhető; az alábbi kézi mátrix nem tekinthető automatikusan teljesítettnek.
 
@@ -45,3 +45,19 @@ A mentés helyi; nincs szinkronizáció vagy exportáló/feltámasztó gomb. A d
 - `apksigner verify --verbose`: a debug APK v2 aláírása érvényes.
 - `zipalign -c -P 16 4`: sikeres. Az AndroidX `libandroidx.graphics.path.so` arm64-v8a, armeabi-v7a, x86 és x86_64 változatának minden ELF LOAD szegmense 16 384 bájtos igazítású. Ez statikus csomagellenőrzés, nem helyettesít fizikai ARM64/32 bites tesztet.
 - Android-eszköztesztek helyben nem futottak; a GitHub Actions API 24 és 37.0 emulátoros futásának eredménye külön mérvadó.
+
+
+## Végleges GitHub-eredmény
+
+**[Android APK – sikeres teljes futás](https://github.com/danzig666/pixelgotchi/actions/runs/40513709119)**, 2026. október 27. Tesztelt alkalmazáskód: `8ccd0d1867f7f93904261e770d10219e30f18ff0`.
+
+- GitHub: 25 JVM-teszt sikeres; Android lint 0 hiba; debug APK, aláíratlan release APK és Android teszt-APK lefordult.
+- Android 7.0 / API 24 x86_64 Nexus 7 emulátor: **6/6 teszt sikeres**, 15,094 másodperc.
+- Android 17 / API 37.0 x86_64 Nexus 7 emulátor: **6/6 teszt sikeres**, 16,969 másodperc.
+- Mindkét rendszeren igazoltuk a Room újranyitását, valódi sémamigrációt, sérült adatbázis megőrzését, párhuzamos gondozás sorosítását, régi állatazonosító elutasítását és az értesítésektől független halált.
+- A felületi teszt mindkét rendszeren végigkattintotta a profilválasztást, névadást, etetést, takarítást és gyógyszert; ellenőrizte az Activity újralétrehozását és a forgatást. A teszt gyorsított történeti időpontjai kizárólag a külön teszt-APK-ban szerepelnek.
+- Az APK-k telepítve maradtak a teszt után. Valódi `am force-stop` és újraindítás is sikeresen lefutott; a profilképernyő a mentett Pötyit mutatta. A script kis telefonra méretezett ablakban 200%-os betűmérettel is elindította az alkalmazást.
+- Valódi PNG-k készültek a profilokról, tojásról, gyermek kisállatról, álló/fekvő elrendezésről és nagyított betűs kis telefonról. A `device-api-24` és `device-api-37.0` Actions-artifactokban megtalálhatók a képekkel együtt a HTML-riportok és logcat-kimenetek.
+- A GitHubon készült debug APK v2 aláírását és 16 KB-os ZIP-igazítását letöltés után külön is ellenőriztük: sikeres.
+
+A köztes API-k, fizikai ARM32/ARM64 eszközök, TalkBack kézi használata, a nagy tabletek teljes kézi mátrixa, valamint valódi lemerülés/kikapcsolás és reboot továbbra sincsenek eszközösen végigpróbálva. Az ezekre vonatkozó sorok teszttervek, nem sikeres futásnak feltüntetett állítások. A teljes időfolytonosságot és az óravisszaállítást a determinisztikus tesztek is lefedik.
