@@ -72,4 +72,16 @@ class PersistenceTest {
         assertNull(repo.state.value!!.profiles["Léna"])
         repo.erase()
     }
+    @Test fun corruptedDatabaseIsNotDeletedOrSilentlyReplaced() {
+        val name="corruption-test.db";context.deleteDatabase(name)
+        val file=context.getDatabasePath(name);file.parentFile!!.mkdirs()
+        val original=ByteArray(8192){0x55.toByte()};file.writeBytes(original)
+        val db=Room.databaseBuilder(context,GameDatabase::class.java,name)
+            .openHelperFactory(PreservingOpenHelperFactory()).addMigrations(GameDatabase.MIGRATION_1_2).build()
+        var failed=false
+        try { db.game().read() } catch(_: Exception) { failed=true }
+        assertTrue(failed);assertTrue(file.exists());assertArrayEquals(original,file.readBytes())
+        db.close();context.deleteDatabase(name)
+    }
+
 }

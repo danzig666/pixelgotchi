@@ -17,7 +17,7 @@ data class World(val format: Int = 1, var clock: ClockAnchor = ClockAnchor(),
     var profiles: MutableMap<String,Pet?> = mutableMapOf("Lili" to null,"Léna" to null),var preferences: Preferences = Preferences())
 class GameRepository private constructor(context: Context) {
     val database = Room.databaseBuilder(context,GameDatabase::class.java,"pixelgotchi.db")
-        .addMigrations(GameDatabase.MIGRATION_1_2).build()
+        .openHelperFactory(PreservingOpenHelperFactory()).addMigrations(GameDatabase.MIGRATION_1_2).build()
     private val clock=GameClock(context)
     private val gson=Gson()
     private val mutex=Mutex()
