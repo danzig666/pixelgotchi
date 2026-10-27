@@ -25,6 +25,11 @@ class UiTest {
     private val repo get()=GameRepository.get(instrumentation.targetContext)
     private fun tap(selector: BySelector) {
         val node=device.wait(Until.findObject(selector),20_000)
+        if(node==null) {
+            capture("missing-control")
+            val directory=instrumentation.targetContext.getExternalFilesDir("screenshots")!!
+            device.dumpWindowHierarchy(File(directory,"missing-control.xml"))
+        }
         assertNotNull("Missing control: $selector",node);node!!.click();device.waitForIdle()
     }
     private fun await(predicate: ()->Boolean) {
@@ -38,6 +43,8 @@ class UiTest {
     }
     @Test fun profilesNamingCareControlsAndRotation() {
         runBlocking { repo.erase() }
+        assertTrue(device.wait(Until.hasObject(By.descContains("Lili profilja")),20_000))
+        capture("profiles")
         tap(By.descContains("Lili profilja"));tap(By.text("Pötyi"));tap(By.text("Jöhet a tojás!"))
         await { repo.state.value?.profiles?.get("Lili")!=null }
         tap(By.text("Értem"))

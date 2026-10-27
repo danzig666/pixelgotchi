@@ -2,7 +2,6 @@ package hu.pixelgotchi.data
 
 import android.content.Context
 import androidx.room.Room
-import com.google.gson.Gson
 import hu.pixelgotchi.engine.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +18,7 @@ class GameRepository private constructor(context: Context) {
     val database = Room.databaseBuilder(context,GameDatabase::class.java,"pixelgotchi.db")
         .openHelperFactory(PreservingOpenHelperFactory()).addMigrations(GameDatabase.MIGRATION_1_2).build()
     private val clock=GameClock(context)
-    private val gson=Gson()
+    private val gson=SaveCodec.gson
     private val mutex=Mutex()
     private val engine=Simulator()
     private val mutable=MutableStateFlow<World?>(null)
@@ -30,7 +29,7 @@ class GameRepository private constructor(context: Context) {
             var result: World?=null
             database.runInTransaction {
                 val raw=database.game().read()
-                val w=if(raw==null) World() else decode(raw.json)
+                val w=if(raw==null) World() else SaveCodec.decode(raw.json)
                 val now=ClockMath.advance(w.clock,clock.read())
                 w.profiles.values.filterNotNull().forEach { engine.advance(it,now) }
                 block(w,now)
@@ -42,23 +41,6 @@ class GameRepository private constructor(context: Context) {
             }
             result!!.also { mutable.value=it }
         }
-    }
-    private fun decode(json: String): World {
-        val w=gson.fromJson(json,World::class.java) ?: error("Unreadable save")
-        require(w.format==1 && w.profiles.keys==setOf("Lili","Léna"))
-        requireNotNull(w.clock);requireNotNull(w.preferences)
-        require(w.preferences.colors.keys.containsAll(w.profiles.keys) && w.preferences.colors.values.all{it in 0..3})
-        w.profiles.forEach { (key,p) -> if(p!=null) {
-            require(p.profile==key && p.id.isNotEmpty() && p.name.isNotBlank() && p.name.length<=24)
-            require(p.rulesVersion==GameBalance.VERSION && p.deficits.size==4)
-            require(p.food in 0..4 && p.joy in 0..4 && p.healthUnits in 0..GameBalance.MAX_HEALTH)
-            require(p.processedAt>=p.createdAt && (p.bornAt==0L || p.bornAt in p.createdAt..p.processedAt))
-            require(p.diedAt==0L || (p.diedAt==p.processedAt && p.deathCause!=null))
-            require(!p.alive || p.healthUnits>0)
-            require(p.schedule.valid());java.time.ZoneId.of(p.schedule.zone)
-            p.pendingSchedule?.let{require(it.schedule.valid());java.time.ZoneId.of(it.schedule.zone)}
-        } }
-        return w
     }
     suspend fun create(profile: String,name: String) = transact { w,now ->
         require(profile in w.profiles && name.trim().isNotEmpty())

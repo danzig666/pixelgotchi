@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 mkdir -p device-output
-trap 'adb logcat -d -t 3000 > device-output/logcat.txt || true' EXIT
+collect_evidence() {
+  adb logcat -d -t 3000 > device-output/logcat.txt || true
+  adb exec-out screencap -p > device-output/final-screen.png || true
+  adb pull /sdcard/Android/data/hu.pixelgotchi/files/screenshots device-output/ || true
+}
+trap collect_evidence EXIT
 ./gradlew connectedDebugAndroidTest --stacktrace
 adb pull /sdcard/Android/data/hu.pixelgotchi/files/screenshots device-output/ || true
 # A real force-stop/start smoke test; offline state is reconciled on launch.

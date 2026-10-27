@@ -40,7 +40,7 @@ A mentés helyi; nincs szinkronizáció vagy exportáló/feltámasztó gomb. A d
 ## Helyben ténylegesen elvégzett ellenőrzések (2026. október 27.)
 
 - JDK 17.0.17, Gradle 9.6.0, AGP 9.4.0, SDK 37.0 / Build Tools 37.0.0 alatt a debug APK, aláíratlan release APK és Android teszt-APK lefordult.
-- **21 JVM-teszt sikeres, 0 hiba.** A tesztkészlet a valódi 2026. október 25-i budapesti óraátállítás 11,5 órás védett éjszakáját, valamint gondozással a teljes 30 napos életutat és összes fejlődési szakaszt is ellenőrzi.
+- **25 JVM-teszt sikeres, 0 hiba.** A mentési körtesztek az el nem indított profilok és a halál pontos visszatöltését is ellenőrzik. A tesztkészlet a valódi 2026. október 25-i budapesti óraátállítás 11,5 órás védett éjszakáját, valamint gondozással a teljes 30 napos életutat és összes fejlődési szakaszt is ellenőrzi.
 - Android lint sikeres, 0 error. A rögzített, kompatibilis függőségekhez újabb verziókat ajánló figyelmeztetések megmaradtak; ezeket nem tekintjük működési hibának.
 - `apksigner verify --verbose`: a debug APK v2 aláírása érvényes.
 - `zipalign -c -P 16 4`: sikeres. Az AndroidX `libandroidx.graphics.path.so` arm64-v8a, armeabi-v7a, x86 és x86_64 változatának minden ELF LOAD szegmense 16 384 bájtos igazítású. Ez statikus csomagellenőrzés, nem helyettesít fizikai ARM64/32 bites tesztet.
