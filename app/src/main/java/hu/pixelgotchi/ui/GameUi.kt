@@ -210,22 +210,21 @@ private val eggShape=object: Shape {
     val shell=Shells[color]
     Column(modifier.background(Brush.linearGradient(listOf(shell.copy(alpha=.55f),shell,shell.copy(red=(shell.red*.85f)))),eggShape)
         .border(2.dp,shell.copy(red=shell.red*.8f,green=shell.green*.8f,blue=shell.blue*.8f),eggShape)
-        .padding(horizontal=26.dp).padding(top=53.dp,bottom=42.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(14.dp)) {
-        Text(word(R.string.brand),fontSize=12.sp,letterSpacing=4.sp,fontWeight=FontWeight.Bold,color=Ink.copy(alpha=.7f))
-        Text(stringResource(R.string.profile_of,p.profile),fontSize=12.sp,color=Ink)
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ink.copy(alpha=.15f)).padding(7.dp).clip(RoundedCornerShape(14.dp)).background(if(p.light)Lcd else Color(0xffa6b68e)).border(2.dp,Ink.copy(alpha=.5f),RoundedCornerShape(14.dp)).padding(12.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+        .padding(horizontal=26.dp).padding(top=32.dp,bottom=24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(8.dp)) {
+        Text(p.profile+" · "+word(R.string.brand),fontSize=12.sp,letterSpacing=2.sp,fontWeight=FontWeight.Bold,color=Ink.copy(alpha=.7f))
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ink.copy(alpha=.15f)).padding(4.dp).clip(RoundedCornerShape(14.dp)).background(if(p.light)Lcd else Color(0xffa6b68e)).border(2.dp,Ink.copy(alpha=.5f),RoundedCornerShape(14.dp)).padding(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-                Text(p.name,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.weight(1f))
+                Text(p.name,fontSize=14.sp,lineHeight=20.sp,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.weight(1f))
                 Text(word(stageText(p.stage)),fontSize=11.sp,color=Ink)
             }
-            PetCanvas(p,Modifier.fillMaxWidth().aspectRatio(2.4f),animate=true,feedback=feedback)
+            PetCanvas(p,Modifier.fillMaxWidth().aspectRatio(2.8f),animate=true,feedback=feedback)
             Hearts(R.string.hearts_food,p.food);Hearts(R.string.hearts_joy,p.joy)
-            Text(if(!p.alive)stringResource(R.string.dead_name,p.name) else if(feedback!=null)word(feedbackText(feedback)) else word(stateText(p)),fontSize=12.sp,lineHeight=18.sp,color=Ink,modifier=Modifier.fillMaxWidth().heightIn(min=36.dp),textAlign=TextAlign.Center)
+            Text(if(!p.alive)stringResource(R.string.dead_name,p.name) else if(feedback!=null)word(feedbackText(feedback)) else word(stateText(p)),fontSize=12.sp,lineHeight=18.sp,color=Ink,modifier=Modifier.fillMaxWidth().heightIn(min=32.dp),textAlign=TextAlign.Center)
         }
         for(row in listOf(0..3,4..6)) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(2.dp)) {
             row.forEach { index ->
                 val label=word(Labels[index]);val selectedDescription=stringResource(R.string.selected_action,label)
-                Column(Modifier.weight(1f).heightIn(min=64.dp).clip(RoundedCornerShape(12.dp))
+                Column(Modifier.weight(1f).heightIn(min=56.dp).clip(RoundedCornerShape(12.dp))
                     .background(if(index==selected)Color.White.copy(alpha=.55f) else Color.Transparent)
                     .clickable(enabled=!busy && (p.alive || index==6)) { perform(index) }
                     .semantics { contentDescription=if(index==selected)selectedDescription else label;this.selected=index==selected }
@@ -255,7 +254,7 @@ private val eggShape=object: Shape {
 @Composable private fun Hearts(label: Int,count: Int) {
     val description=stringResource(R.string.hearts_description,word(label),count)
     Row(Modifier.fillMaxWidth().semantics(mergeDescendants=true){contentDescription=description},horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-        Text(word(label),fontSize=11.sp,color=Ink);Text("♥".repeat(count)+"♡".repeat(4-count),fontSize=20.sp,letterSpacing=2.sp,color=Ink)
+        Text(word(label),fontSize=11.sp,color=Ink);Text("♥".repeat(count)+"♡".repeat(4-count),fontSize=18.sp,lineHeight=22.sp,letterSpacing=1.sp,color=Ink)
     }
 }
 @Composable private fun Stats(p: Pet) {

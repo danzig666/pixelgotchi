@@ -12,7 +12,6 @@ import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 import java.time.Instant
 import java.time.ZoneId
 
@@ -24,13 +23,13 @@ class UiTest {
     private val device get()=UiDevice.getInstance(instrumentation)
     private val repo get()=GameRepository.get(instrumentation.targetContext)
     private fun tap(selector: BySelector) {
-        val node=device.wait(Until.findObject(selector),20_000)
-        if(node==null) {
-            capture("missing-control")
-            val directory=instrumentation.targetContext.getExternalFilesDir("screenshots")!!
-            device.dumpWindowHierarchy(File(directory,"missing-control.xml"))
+        repeat(3) {
+            val node=device.wait(Until.findObject(selector),20_000)
+            if(node!=null)try { node.click();device.waitForIdle();return }
+            catch(_: StaleObjectException) { SystemClock.sleep(150) }
         }
-        assertNotNull("Missing control: $selector",node);node!!.click();device.waitForIdle()
+        capture("missing-control")
+        fail("Missing or unstable control: $selector")
     }
     private fun await(predicate: ()->Boolean) {
         val deadline=SystemClock.elapsedRealtime()+20_000
@@ -38,8 +37,9 @@ class UiTest {
         assertTrue("State did not settle",predicate())
     }
     private fun capture(name: String) {
-        val directory=instrumentation.targetContext.getExternalFilesDir("screenshots")!!;directory.mkdirs()
-        assertTrue(device.takeScreenshot(File(directory,"$name.png")))
+        device.waitForIdle()
+        device.executeShellCommand("mkdir -p /data/local/tmp/pixelgotchi-screenshots")
+        device.executeShellCommand("screencap -p /data/local/tmp/pixelgotchi-screenshots/$name.png")
     }
     @Test fun profilesNamingCareControlsAndRotation() {
         runBlocking { repo.erase() }

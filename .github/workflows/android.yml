@@ -48,7 +48,6 @@ jobs:
           path: pixelgotchi-source.zip
           retention-days: 30
   device-tests:
-    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 35
     strategy:

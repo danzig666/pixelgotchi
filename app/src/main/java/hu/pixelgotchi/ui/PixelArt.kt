@@ -96,6 +96,10 @@ private fun DrawScope.pixels(pattern: List<String>, x: Float,y: Float,pixel: Flo
             if(eating && frame%2==0 && p.alive)pixels(food,x+17*px,y+6*px,px)
             if(joyful && p.alive)pixels(heart,x+16*px,y-3*px,px)
             if(feedback==Feedback.FULL && p.alive)pixels(listOf("111","101"),x+5*px,y+7*px,px,Lcd)
+            if(!p.alive) {
+                val finalShape=when(p.stage) { Stage.EGG->egg;Stage.BABY->baby;Stage.CHILD->child;Stage.TEEN->teen;else->adults[p.variant.coerceIn(0,6)] }
+                pixels(finalShape,ox+9*px,oy+8*px,px,Ink.copy(alpha=.5f))
+            }
             if(!p.alive && frame%2==0)pixels(listOf("010","111","010"),x+18*px,y-4*px,px)
         }
         drawRect(Ink.copy(alpha=.4f),Offset(ox+3*px,oy+28*px),Size(66*px,px))

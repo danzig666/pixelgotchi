@@ -4,11 +4,11 @@ mkdir -p device-output
 collect_evidence() {
   adb logcat -d -t 3000 > device-output/logcat.txt || true
   adb exec-out screencap -p > device-output/final-screen.png || true
-  adb pull /sdcard/Android/data/hu.pixelgotchi/files/screenshots device-output/ || true
+  adb pull /data/local/tmp/pixelgotchi-screenshots device-output/ || true
 }
 trap collect_evidence EXIT
-./gradlew connectedDebugAndroidTest --stacktrace
-adb pull /sdcard/Android/data/hu.pixelgotchi/files/screenshots device-output/ || true
+./gradlew connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true --stacktrace
+adb pull /data/local/tmp/pixelgotchi-screenshots device-output/ || true
 # A real force-stop/start smoke test; offline state is reconciled on launch.
 adb shell am force-stop hu.pixelgotchi
 adb shell am start -W -n hu.pixelgotchi/.MainActivity > device-output/relaunch.txt
