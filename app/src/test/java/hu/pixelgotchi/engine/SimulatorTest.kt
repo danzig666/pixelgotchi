@@ -66,7 +66,7 @@ class SimulatorTest {
     @Test fun sleepProtectsWithoutCuringAndDarknessDoesNotPauseDay() {
         val p=pet();val bedtime=start+13*h+30*m;sim.advance(p,bedtime)
         p.sick=true;p.food=0;p.poop=3;val health=p.healthUnits
-        sim.advance(p,bedtime+10*h+30*m);assertFalse(p.sleeping);assertTrue(p.sick);assertEquals(0,p.food);assertEquals(3,p.poop);assertEquals(health,p.healthUnits)
+        sim.advance(p,bedtime+10*h+30*m);assertFalse(p.sleeping);assertEquals(p.processedAt,p.wokeAt);assertTrue(p.sick);assertEquals(0,p.food);assertEquals(3,p.poop);assertEquals(health,p.healthUnits)
         sim.act(p,p.processedAt,Action.LIGHT);sim.advance(p,p.processedAt+h);assertEquals(health-10*h,p.healthUnits)
     }
     @Test fun deathIsPermanentAndActionsCannotSaveRetroactively() {

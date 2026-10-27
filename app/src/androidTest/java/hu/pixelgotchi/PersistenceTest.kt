@@ -38,10 +38,11 @@ class PersistenceTest {
         val db=Room.databaseBuilder(context,GameDatabase::class.java,name).addMigrations(GameDatabase.MIGRATION_1_2).build()
         assertEquals("preserved",db.game().read()!!.json);assertTrue(db.game().album("Lili").isEmpty());db.close();context.deleteDatabase(name)
     }
-    @Test fun concurrentWorkerAndUiDoNotLoseActionsAndStalePetCannotChangeReplacement()=runBlocking {
+    @Test fun concurrentWorkerAndUiDoNotLoseActionsAndStalePetCannotChangeReplacement()=runBlocking<Unit> {
         val repo=GameRepository.get(context);repo.erase();repo.create("Lili","Pötyi")
         repo.transact { w,now ->
-            val p=w.profiles["Lili"]!!;p.bornAt=now-1000;p.stage=Stage.BABY
+            val p=w.profiles["Lili"]!!.copy(createdAt=now-61_000,bornAt=now-1000,stage=Stage.BABY)
+            w.profiles["Lili"]=p
             // A daytime zone independent of the runner's time of day.
             p.schedule=Schedule(bedtime=1,wake=601,zone="Etc/GMT+12")
             val local=java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.of("UTC")).hour*60
@@ -62,7 +63,7 @@ class PersistenceTest {
         assertEquals(1,repo.album("Lili").size);assertTrue(repo.album("Léna").isEmpty())
         repo.erase()
     }
-    @Test fun notificationsOffStillAdvancesAndDoesNotStartUnusedProfile()=runBlocking {
+    @Test fun notificationsOffStillAdvancesAndDoesNotStartUnusedProfile()=runBlocking<Unit> {
         val repo=GameRepository.get(context);repo.erase();repo.create("Lili","Morzsi")
         repo.transact{w,_->w.preferences.notifications=false}
         // The egg's createdAt must also represent the actual historical creation.

@@ -107,6 +107,7 @@ class Simulator {
             p.nightFault = true; p.mistakes++
         }
         if (asleep && !p.sleeping) { p.sleepSince = now; p.nightFault = false }
+        if(!asleep && p.sleeping)p.wokeAt=now
         p.sleeping = asleep
         // Events earned during the preceding awake interval still occur exactly at bedtime.
         while (p.hungerTimer >= HUNGER) { p.hungerTimer -= HUNGER; p.food = (p.food - 1).coerceAtLeast(0) }

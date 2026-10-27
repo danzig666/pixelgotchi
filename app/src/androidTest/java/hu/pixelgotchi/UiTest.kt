@@ -1,46 +1,70 @@
 package hu.pixelgotchi
 
-import android.content.pm.ActivityInfo
-import androidx.compose.ui.test.*
-import androidx.compose.ui.graphics.asAndroidBitmap
-import android.graphics.Bitmap
-import java.io.File
-import java.io.FileOutputStream
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import android.os.SystemClock
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.*
 import hu.pixelgotchi.data.GameRepository
+import hu.pixelgotchi.engine.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
+import java.time.Instant
+import java.time.ZoneId
 
+/** Uses supported UiAutomation input, avoiding Espresso's removed InputManager reflection on API 37. */
 @RunWith(AndroidJUnit4::class)
 class UiTest {
-    @get:Rule val compose=createAndroidComposeRule<MainActivity>()
+    @get:Rule val activity=ActivityScenarioRule(MainActivity::class.java)
+    private val instrumentation get()=InstrumentationRegistry.getInstrumentation()
+    private val device get()=UiDevice.getInstance(instrumentation)
+    private val repo get()=GameRepository.get(instrumentation.targetContext)
+    private fun tap(selector: BySelector) {
+        val node=device.wait(Until.findObject(selector),20_000)
+        assertNotNull("Missing control: $selector",node);node!!.click();device.waitForIdle()
+    }
+    private fun await(predicate: ()->Boolean) {
+        val deadline=SystemClock.elapsedRealtime()+20_000
+        while(!predicate() && SystemClock.elapsedRealtime()<deadline)SystemClock.sleep(100)
+        assertTrue("State did not settle",predicate())
+    }
     private fun capture(name: String) {
-        val image=compose.onRoot().captureToImage().asAndroidBitmap()
-        val directory=compose.activity.getExternalFilesDir("screenshots")!!;directory.mkdirs()
-        FileOutputStream(File(directory,name+".png")).use { image.compress(Bitmap.CompressFormat.PNG,100,it) }
+        val directory=instrumentation.targetContext.getExternalFilesDir("screenshots")!!;directory.mkdirs()
+        assertTrue(device.takeScreenshot(File(directory,"$name.png")))
     }
     @Test fun profilesNamingCareControlsAndRotation() {
-        runBlocking { GameRepository.get(compose.activity).erase() }
-        compose.waitForIdle()
-        compose.onNodeWithText("Lili",useUnmergedTree=true).performClick()
-        compose.onNodeWithText("Pötyi").performClick()
-        compose.onNodeWithText("Jöhet a tojás!").performClick()
-        compose.waitUntil(10000) { GameRepository.get(compose.activity).state.value?.profiles?.get("Lili")!=null }
-        compose.onNodeWithText("Értem").performClick()
-        compose.onNodeWithText("Nemsokára kikelek!").assertExists()
+        runBlocking { repo.erase() }
+        tap(By.desc("Lili profilja"));tap(By.text("Pötyi"));tap(By.text("Jöhet a tojás!"))
+        await { repo.state.value?.profiles?.get("Lili")!=null }
+        tap(By.text("Értem"))
+        val id=repo.state.value!!.profiles["Lili"]!!.id
+        capture("egg-portrait")
+        // Only the test APK injects historical timestamps; production always uses real time.
+        runBlocking {
+            repo.transact { w,now ->
+                val minute=Instant.ofEpochMilli(now).atZone(ZoneId.of("UTC")).let{it.hour*60+it.minute}
+                val bedtime=(minute+120)%1440
+                w.profiles["Lili"]=w.profiles["Lili"]!!.copy(createdAt=now-3*GameBalance.HOUR-GameBalance.MINUTE,
+                    bornAt=now-3*GameBalance.HOUR,processedAt=now-3*GameBalance.HOUR,stage=Stage.BABY,
+                    schedule=Schedule(bedtime,(bedtime+600)%1440,"UTC"))
+            }
+            repo.transact()
+        }
+        tap(By.descContains("Étel"));tap(By.text("Rendes étel"))
+        await { repo.state.value!!.profiles["Lili"]!!.food==4 }
+        runBlocking { repo.transact { w,_->w.profiles["Lili"]!!.poop=1;w.profiles["Lili"]!!.sick=true } }
+        tap(By.desc("Takarítás"));await{repo.state.value!!.profiles["Lili"]!!.poop==0}
+        tap(By.desc("Gyógyszer"));await{!repo.state.value!!.profiles["Lili"]!!.sick}
         capture("device-portrait")
-        val id=GameRepository.get(compose.activity).state.value!!.profiles["Lili"]!!.id
-        compose.activityRule.scenario.recreate()
-        compose.waitUntil(10000){compose.onAllNodesWithText("Nemsokára kikelek!").fetchSemanticsNodes().isNotEmpty()}
-        assertEquals(id,GameRepository.get(compose.activity).state.value!!.profiles["Lili"]!!.id)
-        compose.activity.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        compose.waitForIdle()
-        compose.onNodeWithText("PIXELGOTCHI").assertExists()
-        capture("device-landscape")
-        assertNull(GameRepository.get(compose.activity).state.value!!.profiles["Léna"])
+        activity.scenario.recreate()
+        assertTrue(device.wait(Until.hasObject(By.desc("Pötyi pixelképe")),20_000))
+        assertEquals(id,repo.state.value!!.profiles["Lili"]!!.id)
+        device.setOrientationLeft();device.waitForIdle();capture("device-landscape")
+        device.setOrientationNatural()
+        assertNull(repo.state.value!!.profiles["Léna"])
     }
 }

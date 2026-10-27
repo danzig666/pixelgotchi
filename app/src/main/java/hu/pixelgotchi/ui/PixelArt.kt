@@ -60,7 +60,7 @@ private fun DrawScope.pixels(pattern: List<String>, x: Float,y: Float,pixel: Flo
     val description=stringResource(R.string.lcd_description,p?.name ?: stringResource(R.string.stage_egg))
     Canvas(modifier.semantics { contentDescription=description }) {
         val px=floor(minOf(size.width/72,size.height/29)).coerceAtLeast(1f)
-        val width=72*px;val height=29*px;val ox=(size.width-width)/2;val oy=(size.height-height)/2
+        val width=72*px;val height=29*px;val ox=floor((size.width-width)/2);val oy=floor((size.height-height)/2)
         for(x in 0..71)for(y in 0..28)drawRect(Ink.copy(alpha=.045f),Offset(ox+x*px,oy+y*px),Size(px*.8f,px*.8f))
         val pattern=when {
             p==null || p.stage==Stage.EGG -> egg
@@ -112,5 +112,5 @@ private val icons=listOf(
 )
 @Composable fun PixelIcon(index: Int,modifier: Modifier=Modifier,color: Color=Ink) { Canvas(modifier) {
     val px=floor(minOf(size.width,size.height)/6).coerceAtLeast(1f)
-    pixels(icons[index],(size.width-6*px)/2,(size.height-6*px)/2,px,color)
+    pixels(icons[index],floor((size.width-6*px)/2),floor((size.height-6*px)/2),px,color)
 } }

@@ -62,6 +62,7 @@ data class Pet(
     var totalDeprived: Long = 0,
     var sleeping: Boolean = false,
     var sleepSince: Long = 0,
+    var wokeAt: Long = 0,
     var nightFault: Boolean = false,
     var light: Boolean = true,
     var schedule: Schedule = Schedule(),

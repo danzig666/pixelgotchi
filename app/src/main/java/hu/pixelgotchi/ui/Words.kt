@@ -15,7 +15,7 @@ fun stateText(p: Pet)=when {
     !p.alive->R.string.remember;p.stage==Stage.EGG->R.string.state_egg;p.sleeping->R.string.state_sleep
     p.sick->R.string.state_sick;p.food==0->R.string.state_hungry;p.joy==0->R.string.state_sad
     p.poop>0->R.string.state_dirty;p.falseCall->R.string.state_call;!p.light->R.string.state_dark
-    p.food<4->R.string.state_wake;else->R.string.state_good
+    p.wokeAt>0 && p.processedAt-p.wokeAt<GameBalance.CARE_GRACE->R.string.state_wake;else->R.string.state_good
 }
 fun feedbackText(f: Feedback)=when(f) {
     Feedback.MEAL->R.string.f_meal;Feedback.SNACK->R.string.f_snack;Feedback.FULL->R.string.f_full
