@@ -7,6 +7,8 @@ import hu.pixelgotchi.data.*
 import hu.pixelgotchi.engine.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import android.util.Log
 
 class GameViewModel(application: Application): AndroidViewModel(application) {
     private val repo=GameRepository.get(application)
@@ -18,10 +20,10 @@ class GameViewModel(application: Application): AndroidViewModel(application) {
     init { refresh() }
     private fun run(block: suspend ()->Unit) { viewModelScope.launch {
         busy.value=true
-        try { block();error.value=false } catch (_: Exception) { error.value=true } finally { busy.value=false }
+        try { block();error.value=false } catch (cancelled: CancellationException) { throw cancelled } catch (failure: Exception) { Log.e("Pixelgotchi","Save operation failed",failure);error.value=true } finally { busy.value=false }
     } }
     fun refresh()=run { repo.transact() }
-    suspend fun tick() { try { repo.transact();error.value=false } catch (_: Exception) { error.value=true } }
+    suspend fun tick() { try { repo.transact();error.value=false } catch (cancelled: CancellationException) { throw cancelled } catch (failure: Exception) { Log.e("Pixelgotchi","Save operation failed",failure);error.value=true } }
     fun create(profile: String,name: String)=run { repo.create(profile,name);Reminders.cancel(getApplication(),profile) }
     fun act(p: Pet,action: Action)=run { feedback.value=repo.action(p.profile,p.id,action);if(world.value?.profiles?.get(p.profile)?.severity()==0)Reminders.cancel(getApplication(),p.profile) }
     fun guess(p: Pet,direction: Int)=run { feedback.value=repo.guess(p.profile,p.id,direction) }

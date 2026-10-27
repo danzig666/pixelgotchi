@@ -15,6 +15,7 @@ import hu.pixelgotchi.MainActivity
 import hu.pixelgotchi.R
 import hu.pixelgotchi.engine.GameBalance
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
 
 object Reminders {
     const val CHANNEL="gondozas"
@@ -60,5 +61,5 @@ class ReminderWorker(context: Context,params: WorkerParameters): CoroutineWorker
             }
         }
         Result.success()
-    } catch (_: Exception) { Result.retry() }
+    } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { Result.retry() }
 }

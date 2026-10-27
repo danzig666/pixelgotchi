@@ -38,7 +38,6 @@ import hu.pixelgotchi.R
 import hu.pixelgotchi.data.*
 import hu.pixelgotchi.engine.*
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -50,7 +49,7 @@ private val Labels=listOf(R.string.food,R.string.play,R.string.clean,R.string.me
 private val eggShape=object: Shape {
     override fun createOutline(size: Size,layoutDirection: LayoutDirection,density: Density): Outline {
         val w=size.width;val h=size.height
-        return Outline.Generic(Path().apply { moveTo(w*.5f,0f);cubicTo(w*.84f,0f,w,h*.32f,w,h*.57f);cubicTo(w,h*.87f,w*.83f,h,w*.5f,h);cubicTo(w*.17f,h,0f,h*.87f,0f,h*.57f);cubicTo(0f,h*.32f,w*.16f,0f,w*.5f,0f);close() })
+        return Outline.Generic(Path().apply { moveTo(w*.5f,0f);cubicTo(w,0f,w,h*.1f,w,h*.45f);cubicTo(w,h*.87f,w*.83f,h,w*.5f,h);cubicTo(w*.17f,h,0f,h*.87f,0f,h*.45f);cubicTo(0f,h*.1f,0f,0f,w*.5f,0f);close() })
     }
 }
 @Composable private fun word(id: Int)=stringResource(id)
@@ -74,12 +73,12 @@ private val eggShape=object: Shape {
     val lifecycle=LocalLifecycleOwner.current
     LaunchedEffect(lifecycle) {
         lifecycle.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            vm.tick()
-            vm.world.collectLatest { w ->
+            while(true) {
+                vm.tick()
+                val w=vm.world.value
                 val now=w?.clock?.logical ?: 0L
                 val next=w?.profiles?.values?.filterNotNull()?.minOfOrNull { Simulator().nextEventAt(it) } ?: Long.MAX_VALUE
                 delay(if(next==Long.MAX_VALUE)60_000L else (next-now).coerceIn(1L,60_000L))
-                vm.tick()
             }
         }
     }
@@ -210,7 +209,7 @@ private val eggShape=object: Shape {
     val shell=Shells[color]
     Column(modifier.background(Brush.linearGradient(listOf(shell.copy(alpha=.55f),shell,shell.copy(red=(shell.red*.85f)))),eggShape)
         .border(2.dp,shell.copy(red=shell.red*.8f,green=shell.green*.8f,blue=shell.blue*.8f),eggShape)
-        .padding(horizontal=26.dp).padding(top=32.dp,bottom=24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(8.dp)) {
+        .padding(horizontal=34.dp).padding(top=40.dp,bottom=24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(8.dp)) {
         Text(p.profile+" · "+word(R.string.brand),fontSize=12.sp,letterSpacing=2.sp,fontWeight=FontWeight.Bold,color=Ink.copy(alpha=.7f))
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ink.copy(alpha=.15f)).padding(4.dp).clip(RoundedCornerShape(14.dp)).background(if(p.light)Lcd else Color(0xffa6b68e)).border(2.dp,Ink.copy(alpha=.5f),RoundedCornerShape(14.dp)).padding(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
