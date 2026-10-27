@@ -1,0 +1,42 @@
+name: Publish verified APK
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v1.0.0']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download verified build and screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh api repos/danzig666/pixelgotchi/actions/runs/40513709119 > tested-run.json
+          jq -e '.conclusion == "success" and .head_sha == "8ccd0d1867f7f93904261e770d10219e30f18ff0"' tested-run.json
+          gh run download 40513709119 -n pixelgotchi-apk-and-reports -D artifacts/build
+          gh run download 40513709119 -n device-api-37.0 -D artifacts/device
+      - name: Package release
+        run: |
+          mkdir -p release
+          cp artifacts/build/outputs/apk/debug/app-debug.apk release/pixelgotchi-debug.apk
+          cp artifacts/device/device-output/pixelgotchi-screenshots/profiles.png release/profiles.png
+          cp artifacts/device/device-output/pixelgotchi-screenshots/device-portrait.png release/game-portrait.png
+          cp artifacts/device/device-output/pixelgotchi-screenshots/device-landscape.png release/game-landscape.png
+          git archive --format=zip --prefix=pixelgotchi/ --output=release/pixelgotchi-source.zip HEAD
+          cd release
+          sha256sum *.apk *.zip *.png > SHA256SUMS.txt
+      - name: Publish downloadable files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: >-
+          gh release create v1.0.0 release/pixelgotchi-debug.apk release/pixelgotchi-source.zip
+          release/profiles.png release/game-portrait.png release/game-landscape.png release/SHA256SUMS.txt
+          --target "$GITHUB_SHA" --title 'Lili és Léna pixelkedvencei 1.0.0 (debug)'
+          --notes-file docs/RELEASE_NOTES.md
