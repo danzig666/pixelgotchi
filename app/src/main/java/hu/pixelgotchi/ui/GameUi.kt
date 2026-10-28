@@ -15,6 +15,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -46,10 +57,15 @@ private val Cream=Color(0xfffaf7ef)
 private val Purple=Color(0xff685087)
 private val Shells=listOf(Color(0xffc0a7e4),Color(0xffefb79f),Color(0xffacd3bc),Color(0xffa6cce3))
 private val Labels=listOf(R.string.food,R.string.play,R.string.clean,R.string.medicine,R.string.lamp,R.string.teach,R.string.status)
-private val eggShape=object: Shape {
+private val ButtonFace=Color(0xfff4ead0)
+/** Egg-like shell with a width-scaled dome and base; the straight middle band takes any content height. */
+private val shellShape=object: Shape {
     override fun createOutline(size: Size,layoutDirection: LayoutDirection,density: Density): Outline {
-        val w=size.width;val h=size.height
-        return Outline.Generic(Path().apply { moveTo(w*.5f,0f);cubicTo(w,0f,w,h*.1f,w,h*.45f);cubicTo(w,h*.87f,w*.83f,h,w*.5f,h);cubicTo(w*.17f,h,0f,h*.87f,0f,h*.45f);cubicTo(0f,h*.1f,0f,0f,w*.5f,0f);close() })
+        val w=size.width;val h=size.height;val top=minOf(w*.42f,h*.45f);val base=minOf(w*.5f,h*.45f)
+        return Outline.Generic(Path().apply {
+            moveTo(w*.5f,0f);cubicTo(w*.85f,0f,w,top*.55f,w,top);lineTo(w,h-base);cubicTo(w,h-base*.3f,w*.8f,h,w*.5f,h)
+            cubicTo(w*.2f,h,0f,h-base*.3f,0f,h-base);lineTo(0f,top);cubicTo(0f,top*.55f,w*.15f,0f,w*.5f,0f);close()
+        })
     }
 }
 @Composable private fun word(id: Int)=stringResource(id)
@@ -62,7 +78,8 @@ private val eggShape=object: Shape {
     val world by vm.world.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
-    val feedback by vm.feedback.collectAsStateWithLifecycle()
+    val shown by vm.feedback.collectAsStateWithLifecycle()
+    val feedback=shown?.value
     var profile by rememberSaveable { mutableStateOf<String?>(null) }
     var modal by rememberSaveable { mutableStateOf("") }
     var selected by rememberSaveable { mutableIntStateOf(0) }
@@ -94,7 +111,7 @@ private val eggShape=object: Shape {
         if(p!=null && seenPet==p.id && (seenStage!=p.stage || seenAlive!=p.alive))effects.play(world!!.preferences,if(p.alive)3 else 4)
         seenPet=p?.id;seenStage=p?.stage;seenAlive=p?.alive ?: true
     }
-    LaunchedEffect(feedback) { if(feedback!=null) {
+    LaunchedEffect(shown) { if(feedback!=null) {
         if(feedback in listOf(Feedback.WON,Feedback.MEAL,Feedback.CURED,Feedback.TAUGHT))world?.let{effects.play(it.preferences,1)}
         delay(2600);vm.feedback.value=null
     } }
@@ -119,7 +136,8 @@ private val eggShape=object: Shape {
     val fonts=FontFamily(Font(R.font.pixel_sans))
     val typography=Typography().let { base -> base.copy(bodyLarge=base.bodyLarge.copy(fontFamily=fonts),bodyMedium=base.bodyMedium.copy(fontFamily=fonts),labelLarge=base.labelLarge.copy(fontFamily=fonts),titleLarge=base.titleLarge.copy(fontFamily=fonts)) }
     MaterialTheme(colorScheme=lightColorScheme(primary=Purple,onPrimary=Color.White,background=Cream,surface=Cream,onSurface=Ink,secondary=Ink),typography=typography) {
-        Surface(Modifier.fillMaxSize(),color=Cream) {
+        val tint=Shells[world?.preferences?.colors?.get(profile) ?: 0]
+        Surface(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Cream,tint.copy(alpha=.28f).compositeOver(Cream)))),color=Color.Transparent) {
             if(error) Column(Modifier.safeDrawingPadding().padding(28.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
                 Heading(word(R.string.error_title));Text(word(R.string.save_error));ActionButton(R.string.retry,{vm.refresh()})
             } else if(world==null) Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center) { Text(word(R.string.loading)) }
@@ -161,7 +179,7 @@ private val eggShape=object: Shape {
                 }
             }
             if(!error && world!=null) {
-                if(p?.game!=null && p.alive && modal.isEmpty())GameDialog(p,busy,{vm.guess(p,it);click()},{vm.act(p,Action.CANCEL_GAME)},{vm.act(p,Action.START_GAME)})
+                if(p?.game!=null && p.alive && !p.sleeping && modal.isEmpty())GameDialog(p,busy,{vm.guess(p,it);click()},{vm.act(p,Action.CANCEL_GAME)},{vm.act(p,Action.START_GAME)})
                 when(modal) {
                     "name"->NameDialog(profile ?: "Lili",busy,{modal=""}) { name -> vm.create(profile ?: "Lili",name);modal=if(world!!.preferences.introduced)"" else "intro" }
                     "intro","help"->MessageDialog(R.string.intro_title,word(R.string.intro)+"\n\n"+word(R.string.life_warning),{modal="";vm.preferences{it.introduced=true}})
@@ -192,68 +210,100 @@ private val eggShape=object: Shape {
 }
 @Composable private fun ProfileCard(name: String,p: Pet?,color: Int,onClick:()->Unit) {
     val description=stringResource(R.string.profile_description,name)
-    Card(onClick=onClick,modifier=Modifier.widthIn(max=650.dp).fillMaxWidth().semantics{contentDescription=description},shape=RoundedCornerShape(28.dp),colors=CardDefaults.cardColors(containerColor=Shells[color].copy(alpha=.24f))) {
-        Row(Modifier.padding(20.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(18.dp)) {
-            Box(Modifier.size(100.dp,112.dp).background(Brush.verticalGradient(listOf(Shells[color].copy(alpha=.65f),Shells[color])),eggShape).padding(10.dp),contentAlignment=Alignment.Center) {
-                PetCanvas(p,Modifier.fillMaxWidth().height(65.dp).clip(RoundedCornerShape(8.dp)).background(Lcd))
+    val shell=Shells[color]
+    Card(onClick=onClick,modifier=Modifier.widthIn(max=650.dp).fillMaxWidth().semantics{contentDescription=description},shape=RoundedCornerShape(28.dp),
+        colors=CardDefaults.cardColors(containerColor=Color.White.copy(alpha=.7f)),border=BorderStroke(2.dp,shell.copy(alpha=.6f)),elevation=CardDefaults.cardElevation(defaultElevation=2.dp)) {
+        Row(Modifier.background(Brush.horizontalGradient(listOf(shell.copy(alpha=.35f),Color.Transparent))).padding(18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(18.dp)) {
+            // The miniature screen and buttons stay in the shell's straight middle band.
+            Column(Modifier.size(100.dp,116.dp).shadow(4.dp,shellShape).background(shellBrush(shell),shellShape).border(1.5.dp,shade(shell,.78f),shellShape),
+                horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(7.dp,Alignment.CenterVertically)) {
+                Box(Modifier.size(66.dp,46.dp).clip(RoundedCornerShape(9.dp)).background(shade(shell,.62f)).padding(3.dp).clip(RoundedCornerShape(6.dp)).background(Lcd)) {
+                    PetCanvas(p,Modifier.fillMaxSize())
+                }
+                Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) { repeat(3) { Box(Modifier.size(9.dp).background(ButtonFace,CircleShape).border(1.dp,Ink.copy(alpha=.2f),CircleShape)) } }
             }
-            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(7.dp)) {
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(6.dp)) {
                 Text(name,fontSize=28.sp,fontWeight=FontWeight.Bold,color=Ink)
-                Text(p?.name ?: word(R.string.not_started),fontWeight=FontWeight.Medium)
+                Text(p?.name ?: word(R.string.not_started),fontWeight=FontWeight.Medium,color=Ink,maxLines=2,overflow=TextOverflow.Ellipsis)
                 Text(if(p==null)word(R.string.new_friend) else if(!p.alive)stringResource(R.string.dead_name,p.name) else word(stateText(p)),fontSize=12.sp,color=Ink.copy(alpha=.75f))
             }
         }
     }
 }
+private fun shade(c: Color,f: Float)=Color(c.red*f,c.green*f,c.blue*f,c.alpha)
+private fun shellBrush(c: Color)=Brush.linearGradient(listOf(Color(.5f+c.red/2,.5f+c.green/2,.5f+c.blue/2),c,shade(c,.85f)))
 @Composable private fun Device(p: Pet,color: Int,selected: Int,feedback: Feedback?,modifier: Modifier,busy: Boolean,perform:(Int)->Unit,choose:()->Unit,ok:()->Unit,back:()->Unit,attention:()->Unit) {
     val shell=Shells[color]
-    Column(modifier.background(Brush.linearGradient(listOf(shell.copy(alpha=.55f),shell,shell.copy(red=(shell.red*.85f)))),eggShape)
-        .border(2.dp,shell.copy(red=shell.red*.8f,green=shell.green*.8f,blue=shell.blue*.8f),eggShape)
-        .padding(horizontal=34.dp).padding(top=40.dp,bottom=24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text(p.profile+" · "+word(R.string.brand),fontSize=12.sp,letterSpacing=2.sp,fontWeight=FontWeight.Bold,color=Ink.copy(alpha=.7f))
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Ink.copy(alpha=.15f)).padding(4.dp).clip(RoundedCornerShape(14.dp)).background(if(p.light)Lcd else Color(0xffa6b68e)).border(2.dp,Ink.copy(alpha=.5f),RoundedCornerShape(14.dp)).padding(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-                Text(p.name,fontSize=14.sp,lineHeight=20.sp,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.weight(1f))
-                Text(word(stageText(p.stage)),fontSize=11.sp,color=Ink)
-            }
-            PetCanvas(p,Modifier.fillMaxWidth().aspectRatio(2.8f),animate=true,feedback=feedback)
-            Hearts(R.string.hearts_food,p.food);Hearts(R.string.hearts_joy,p.joy)
-            Text(if(!p.alive)stringResource(R.string.dead_name,p.name) else if(feedback!=null)word(feedbackText(feedback)) else word(stateText(p)),fontSize=12.sp,lineHeight=18.sp,color=Ink,modifier=Modifier.fillMaxWidth().heightIn(min=32.dp),textAlign=TextAlign.Center)
-        }
-        for(row in listOf(0..3,4..6)) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(2.dp)) {
-            row.forEach { index ->
-                val label=word(Labels[index]);val selectedDescription=stringResource(R.string.selected_action,label)
-                Column(Modifier.weight(1f).heightIn(min=56.dp).clip(RoundedCornerShape(12.dp))
-                    .background(if(index==selected)Color.White.copy(alpha=.55f) else Color.Transparent)
-                    .clickable(enabled=!busy && (p.alive || index==6)) { perform(index) }
-                    .semantics { contentDescription=if(index==selected)selectedDescription else label;this.selected=index==selected }
-                    .padding(vertical=7.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)) {
-                    PixelIcon(index,Modifier.size(20.dp));Text(label,fontSize=10.sp,textAlign=TextAlign.Center,lineHeight=14.sp,color=Ink)
+    BoxWithConstraints(modifier,contentAlignment=Alignment.TopCenter) {
+        val w=minOf(maxWidth,480.dp)
+        // Insets follow shellShape's dome and base, so no label reaches the curved edge at any width.
+        Column(Modifier.width(w).shadow(10.dp,shellShape,ambientColor=shade(shell,.5f),spotColor=shade(shell,.5f)).background(shellBrush(shell),shellShape)
+            .drawBehind { drawOval(Color.White.copy(alpha=.32f),Offset(size.width*.18f,size.width*.05f),Size(size.width*.28f,size.width*.07f)) }
+            .border(2.dp,shade(shell,.75f),shellShape)
+            .padding(horizontal=w*.1f).padding(top=w*.11f,bottom=w*.12f),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            Text(p.profile+" · "+word(R.string.brand),fontSize=11.sp,letterSpacing=2.sp,fontWeight=FontWeight.Bold,color=shade(shell,.45f),maxLines=1,overflow=TextOverflow.Ellipsis,modifier=Modifier.padding(horizontal=w*.06f))
+            val screen=if(p.light)Lcd else Color(0xffa6b68e)
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Brush.verticalGradient(listOf(shade(shell,.55f),shade(shell,.7f)))).padding(7.dp)
+                .clip(RoundedCornerShape(15.dp)).background(screen).border(1.5.dp,Ink.copy(alpha=.35f),RoundedCornerShape(15.dp)).padding(horizontal=6.dp,vertical=6.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                IconRow(0..3,p,selected,busy,screen,perform,attention)
+                Row(Modifier.fillMaxWidth().padding(horizontal=4.dp),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically) {
+                    Text(p.name,fontSize=14.sp,lineHeight=20.sp,fontWeight=FontWeight.Bold,color=Ink,maxLines=1,overflow=TextOverflow.Ellipsis,modifier=Modifier.weight(1f))
+                    Text(word(stageText(p.stage)),fontSize=11.sp,color=Ink,maxLines=1)
                 }
+                PetCanvas(p,Modifier.fillMaxWidth().aspectRatio(2.8f),animate=true,feedback=feedback)
+                Column(Modifier.padding(horizontal=4.dp),verticalArrangement=Arrangement.spacedBy(2.dp)) { Hearts(R.string.hearts_food,p.food);Hearts(R.string.hearts_joy,p.joy) }
+                Text(if(!p.alive)stringResource(R.string.dead_name,p.name) else if(feedback!=null)word(feedbackText(feedback)) else word(stateText(p)),fontSize=12.sp,lineHeight=16.sp,color=Ink,maxLines=2,overflow=TextOverflow.Ellipsis,
+                    modifier=Modifier.fillMaxWidth().heightIn(min=32.dp).wrapContentHeight(Alignment.CenterVertically),textAlign=TextAlign.Center)
+                IconRow(4..7,p,selected,busy,screen,perform,attention)
             }
-        }
-        OutlinedButton(onClick=attention,modifier=Modifier.heightIn(min=48.dp),border=BorderStroke(1.dp,Ink.copy(alpha=.35f)),contentPadding=PaddingValues(horizontal=14.dp,vertical=4.dp)) {
-            Text((if(p.severity()>0)"● " else "○ ")+word(R.string.attention),color=Ink,fontSize=12.sp)
-        }
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-            listOf(R.string.choose to choose,R.string.ok to ok,R.string.back to back).forEach { (label,callback) ->
-                Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(7.dp)) {
-                    val description=word(label)
-                    Box(Modifier.sizeIn(minWidth=56.dp,minHeight=56.dp).size(58.dp).clip(CircleShape)
-                        .background(Brush.verticalGradient(listOf(Color(0xfffbf4d8),Color(0xffdbca9e))))
-                        .border(2.dp,Ink.copy(alpha=.22f),CircleShape).clickable(enabled=!busy) { callback() }.semantics { contentDescription=description;role=Role.Button },contentAlignment=Alignment.Center) {
-                        Box(Modifier.size(9.dp).background(Ink.copy(alpha=.5f),CircleShape))
-                    }
-                    Text(description,fontSize=10.sp,textAlign=TextAlign.Center,color=Ink)
+            Spacer(Modifier.height(4.dp))
+            // Classic three-button arc: the middle button sits lower, where the shell is widest.
+            Row(Modifier.fillMaxWidth().padding(horizontal=w*.05f),horizontalArrangement=Arrangement.SpaceEvenly) {
+                listOf(R.string.choose to choose,R.string.ok to ok,R.string.back to back).forEachIndexed { index,(label,callback) ->
+                    DeviceButton(word(label),busy,callback,Modifier.weight(1f).padding(top=if(index==1)16.dp else 0.dp))
                 }
             }
         }
     }
 }
+@Composable private fun IconRow(range: IntRange,p: Pet,selected: Int,busy: Boolean,screen: Color,perform:(Int)->Unit,attention:()->Unit) {
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(3.dp)) {
+        range.forEach { index ->
+            val label=word(if(index<Labels.size)Labels[index] else R.string.attention)
+            val selectedDescription=stringResource(R.string.selected_action,label)
+            val isSelected=index==selected
+            // The attention mark only darkens while something needs care, like the original LCD indicator.
+            val lit=index<Labels.size || p.severity()>0
+            val enabled=!busy && (index>=6 || p.alive)
+            val tint=if(isSelected)screen else Ink.copy(alpha=if(lit)1f else .28f)
+            Column(Modifier.weight(1f).heightIn(min=48.dp).clip(RoundedCornerShape(8.dp))
+                .background(if(isSelected)Ink else Color.Transparent)
+                .clickable(enabled=enabled) { if(index<Labels.size)perform(index) else attention() }
+                .semantics { contentDescription=if(isSelected)selectedDescription else label;this.selected=isSelected;role=Role.Button }
+                .padding(vertical=5.dp,horizontal=2.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) {
+                PixelIcon(index,Modifier.size(18.dp),tint)
+                BasicText(label,maxLines=1,color={tint},style=TextStyle(fontFamily=LocalTextStyle.current.fontFamily,textAlign=TextAlign.Center),
+                    autoSize=TextAutoSize.StepBased(minFontSize=6.sp,maxFontSize=10.sp,stepSize=.5.sp),modifier=Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+@Composable private fun DeviceButton(label: String,busy: Boolean,onClick:()->Unit,modifier: Modifier) {
+    val interaction=remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    Column(modifier,horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(6.dp)) {
+        Box(Modifier.size(56.dp).graphicsLayer { val s=if(pressed).92f else 1f;scaleX=s;scaleY=s }.shadow(if(pressed)1.dp else 5.dp,CircleShape)
+            .drawBehind { drawCircle(Brush.radialGradient(listOf(Color.White,ButtonFace,shade(ButtonFace,.84f)),center=Offset(size.width*.36f,size.height*.3f),radius=size.width*.8f)) }
+            .border(1.5.dp,Ink.copy(alpha=.22f),CircleShape)
+            .clickable(interactionSource=interaction,indication=null,enabled=!busy,onClick=onClick).semantics { contentDescription=label;role=Role.Button })
+        BasicText(label,maxLines=1,color={Ink},style=TextStyle(fontFamily=LocalTextStyle.current.fontFamily,textAlign=TextAlign.Center),
+            autoSize=TextAutoSize.StepBased(minFontSize=7.sp,maxFontSize=11.sp,stepSize=.5.sp),modifier=Modifier.fillMaxWidth())
+    }
+}
 @Composable private fun Hearts(label: Int,count: Int) {
     val description=stringResource(R.string.hearts_description,word(label),count)
-    Row(Modifier.fillMaxWidth().semantics(mergeDescendants=true){contentDescription=description},horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-        Text(word(label),fontSize=11.sp,color=Ink);Text("♥".repeat(count)+"♡".repeat(4-count),fontSize=18.sp,lineHeight=22.sp,letterSpacing=1.sp,color=Ink)
+    Row(Modifier.fillMaxWidth().semantics(mergeDescendants=true){contentDescription=description},horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically) {
+        Text(word(label),fontSize=11.sp,color=Ink,maxLines=1,overflow=TextOverflow.Ellipsis,modifier=Modifier.weight(1f));PixelHearts(count,Modifier.size(76.dp,14.dp))
     }
 }
 @Composable private fun Stats(p: Pet) {

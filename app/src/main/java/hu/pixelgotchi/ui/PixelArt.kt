@@ -48,8 +48,9 @@ private fun DrawScope.pixels(pattern: List<String>, x: Float,y: Float,pixel: Flo
 @Composable fun PetCanvas(p: Pet?,modifier: Modifier=Modifier,animate: Boolean=false,feedback: Feedback?=null) {
     var frame by remember { mutableIntStateOf(0) }
     val owner=LocalLifecycleOwner.current
+    val elder by rememberUpdatedState(p?.stage==Stage.ELDER)
     LaunchedEffect(animate,owner) {
-        if(animate)owner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { while(true) { delay(if(p?.stage==Stage.ELDER)800 else 400);frame++ } }
+        if(animate)owner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { while(true) { delay(if(elder)800 else 400);frame++ } }
     }
     var previousStage by remember(p?.id) { mutableStateOf(p?.stage) }
     var evolving by remember(p?.id) { mutableStateOf(false) }
@@ -77,10 +78,12 @@ private fun DrawScope.pixels(pattern: List<String>, x: Float,y: Float,pixel: Flo
         val x=ox+(29+motion)*px;val y=oy+(8+bounce)*px
         val direction=p?.game?.lastDirection ?: -1
         val side=listOf("00001111110000","00111111111100","01111111111110","10011111111111","10011111111111","11111111111111","10001111111110","01111111111100","00111001110000","01100000110000")
+        // Eyes only close on a living pet; a grave or hatching egg has no eyes to blink.
+        val blink=p!=null && p.alive && p.stage!=Stage.EGG && !evolving && (p.sleeping || frame%9==8)
         val shown=if(evolving && frame%2==0)egg else if(direction>=0 && p?.alive==true)side else pattern
         if(direction==1 && !evolving)withTransform({translate(x+14*px,y);scale(-1f,1f,pivot=Offset.Zero)}) {
-            pixels(shown,0f,0f,px,blink=p?.sleeping==true || frame%9==8)
-        } else pixels(shown,x,y,px,blink=p?.sleeping==true || frame%9==8)
+            pixels(shown,0f,0f,px,blink=blink)
+        } else pixels(shown,x,y,px,blink=blink)
         if(evolving) {
             pixels(listOf("010","111","010"),ox+19*px,oy+(4+frame%2)*px,px)
             pixels(listOf("010","111","010"),ox+49*px,oy+(15-frame%2)*px,px)
@@ -112,8 +115,14 @@ private val icons=listOf(
     listOf("001100","001100","111111","111111","001100","001100"),
     listOf("001100","011110","011110","001100","001100","011110"),
     listOf("111111","101101","101101","111111","111111","000000"),
-    listOf("001100","001100","000000","001100","001100","001100")
+    listOf("001100","001100","000000","001100","001100","001100"),
+    listOf("001100","011110","011110","011110","111111","001100")
 )
+@Composable fun PixelHearts(count: Int,modifier: Modifier=Modifier) { Canvas(modifier) {
+    val px=floor(minOf(size.width/31,size.height/6)).coerceAtLeast(1f)
+    val ox=size.width-31*px;val oy=floor((size.height-6*px)/2)
+    repeat(4) { i -> pixels(heart,ox+i*8*px,oy,px,if(i<count)Ink else Ink.copy(alpha=.2f)) }
+} }
 @Composable fun PixelIcon(index: Int,modifier: Modifier=Modifier,color: Color=Ink) { Canvas(modifier) {
     val px=floor(minOf(size.width,size.height)/6).coerceAtLeast(1f)
     pixels(icons[index],floor((size.width-6*px)/2),floor((size.height-6*px)/2),px,color)
