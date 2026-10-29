@@ -154,5 +154,8 @@ class SimulatorTest {
         assertEquals(DeathCause.AGE,p.deathCause);assertEquals(start+30*GameBalance.DAY,p.diedAt)
         assertEquals(listOf(Stage.BABY,Stage.CHILD,Stage.TEEN,Stage.ADULT,Stage.ELDER),p.history.map{it.stage})
     }
-
+    @Test fun unfinishedGameEndsAtBedtime() {
+        val p=pet();sim.act(p,start,Action.START_GAME);sim.guess(p,start,0);assertNotNull(p.game)
+        sim.advance(p,Simulator.nextScheduleBoundary(p,start));assertTrue(p.sleeping);assertNull(p.game)
+    }
 }

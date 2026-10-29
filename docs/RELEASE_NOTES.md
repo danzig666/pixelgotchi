@@ -1,15 +1,20 @@
 Lili és Léna teljesen magyar, offline pixelállatjátéka Android 7.0–17 rendszerre.
 
+Újdonságok az 1.1.0-ban:
+- Új készülékház: minden felirat és gomb a házon belül marad, keskeny telefonon és nagy betűmérettel is.
+- A hét gondozási ikon és a figyelemjelző a kijelzőre került, mint az eredeti játékban. Pixeles szívek, fényes gombok, színes háttér.
+- Ugyanaz a gondozás kétszer egymás után is kiírja az üzenetét és megszólal.
+- A félbehagyott minijáték lefekvéskor véget ér.
+- Az emlékalbum nem villantja fel a másik profil emlékeit.
+- A sír és a tojás nem pislog; az idős állat lassabb mozgása megmarad.
+- A mentés formátuma nem változott; a meglévő játékállás változatlanul betölthető.
+
 Letöltés és telepítés:
 - pixelgotchi-debug.apk: telepíthető, debug-aláírású alkalmazás telefonra és tabletre.
 - pixelgotchi-source.zip: teljes Android Studio-projekt, Gradle Wrapperrel, saját grafikával/hanggal, magyar útmutatóval és tesztekkel.
 
-Két külön profil, 60 másodperces keltetés, valós időben működő gondozás és fejlődés, hét felnőtt karakter, ötfordulós minijáték, végleges halál és emlékalbum. A játék bezárva is folytatódik. Nincs reklám, vásárlás vagy internetigény.
+Fontos: az 1.1.0-tól minden APK ugyanazzal, a repóban tárolt kulccsal készül, így a későbbi verziók a mentés megtartásával telepíthetők fölé. Az 1.0.0 eldobható kulccsal készült; arról egyszer kézzel kell átállni, a mentés átmentését a README írja le.
 
-Fordítás: API 37, minSdk 24, JDK 17, AGP 9.4.0, Gradle 9.6.0. A saját release-aláírás lépései a README-ben szerepelnek; privát release-kulcs nincs a forrásban. A debug-aláírás személyes tesztelésre való.
+Fordítás: API 37, minSdk 24, JDK 17, AGP 9.4.0, Gradle 9.6.0. Az aláírás részletei a README-ben szerepelnek.
 
-A tényleges teszteredmények és a nem ellenőrzött eszközök a forrás docs/TESZTEK.md dokumentumában és a GitHub Actions futási riportjaiban találhatók. Az APK telepítéséhez engedélyezni kell az ismeretlen alkalmazások telepítését az APK-t megnyitó alkalmazásnál.
-
-Ellenőrzött eredmény: 25 JVM-teszt, 0 lint-hiba, Android 7.0/API 24 és Android 17/API 37.0 emulátoron 6–6 sikeres eszközteszt. Sikeres GitHub-futás: https://github.com/danzig666/pixelgotchi/actions/runs/40513709119
-
-A PNG-k valódi emulátoros képernyőképek. A köztes API-k és fizikai ARM-eszközök teljes kézi mátrixa még nincs végigpróbálva.
+A PNG-k valódi emulátoros képernyőképek; a JVM- és eszköztesztek eredménye a lent linkelt GitHub-futásban található.

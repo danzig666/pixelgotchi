@@ -1,8 +1,13 @@
 name: Publish verified APK
 on:
   workflow_dispatch:
-  push:
-    tags: ['v1.0.0']
+    inputs:
+      tag:
+        description: 'Release tag, for example v1.1.0'
+        required: true
+      sha:
+        description: 'Commit on main that passed the Android APK workflow'
+        required: true
 permissions:
   contents: write
   actions: read
@@ -10,17 +15,29 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ inputs.tag }}
+      SHA: ${{ inputs.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha }}
       - name: Download verified build and screenshots
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
+        # Only a fully green push run on main (build and both emulator jobs) is released.
         run: |
-          gh api repos/danzig666/pixelgotchi/actions/runs/40513709119 > tested-run.json
-          jq -e '.conclusion == "success" and .head_sha == "8ccd0d1867f7f93904261e770d10219e30f18ff0"' tested-run.json
-          gh run download 40513709119 -n pixelgotchi-apk-and-reports -D artifacts/build
-          gh run download 40513709119 -n device-api-37.0 -D artifacts/device
+          gh api "repos/$GH_REPO/actions/workflows/android.yml/runs?head_sha=$SHA&event=push&status=success" > runs.json
+          RUN=$(jq -er '[.workflow_runs[] | select(.head_branch == "main")][0].id' runs.json)
+          gh run download "$RUN" -n pixelgotchi-apk-and-reports -D artifacts/build
+          gh run download "$RUN" -n device-api-37.0 -D artifacts/device
+          echo "RUN=$RUN" >> "$GITHUB_ENV"
+      - name: Require the permanent signing key
+        # A throwaway-key APK could never be updated in place, so it is never released.
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs artifacts/build/outputs/apk/debug/app-debug.apk | tee certs.txt
+          grep -q "certificate SHA-256 digest: d75ff9b443724ca4ffe457ddd1e98d8de3127133352c19527186ae9e98bdff93" certs.txt
       - name: Package release
         run: |
           mkdir -p release
@@ -32,11 +49,8 @@ jobs:
           cd release
           sha256sum *.apk *.zip *.png > SHA256SUMS.txt
       - name: Publish downloadable files
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: >-
-          gh release create v1.0.0 release/pixelgotchi-debug.apk release/pixelgotchi-source.zip
-          release/profiles.png release/game-portrait.png release/game-landscape.png release/SHA256SUMS.txt
-          --target "$GITHUB_SHA" --title 'Lili és Léna pixelkedvencei 1.0.0 (debug)'
-          --notes-file docs/RELEASE_NOTES.md
+        run: |
+          { cat docs/RELEASE_NOTES.md; echo; echo "Ellenőrzött GitHub-futás: https://github.com/$GH_REPO/actions/runs/$RUN"; } > notes.md
+          gh release create "$TAG" release/pixelgotchi-debug.apk release/pixelgotchi-source.zip \
+            release/profiles.png release/game-portrait.png release/game-landscape.png release/SHA256SUMS.txt \
+            --target "$SHA" --title "Lili és Léna pixelkedvencei ${TAG#v} (debug)" --notes-file notes.md

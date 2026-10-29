@@ -11,25 +11,33 @@ android {
         applicationId = "hu.pixelgotchi"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
-        create("privateRelease") {
+        // The project's shared key lives in the repo on purpose: every build, local or CI, can update the installed game.
+        // Set PIXELGOTCHI_KEYSTORE (and the matching passwords) to sign with a private key instead.
+        create("pixelgotchi") {
             val keyPath = System.getenv("PIXELGOTCHI_KEYSTORE")
             if (keyPath != null) {
                 storeFile = file(keyPath)
                 storePassword = System.getenv("PIXELGOTCHI_STORE_PASSWORD")
                 keyAlias = System.getenv("PIXELGOTCHI_KEY_ALIAS")
                 keyPassword = System.getenv("PIXELGOTCHI_KEY_PASSWORD")
+            } else {
+                storeFile = rootProject.file("signing/pixelgotchi.p12")
+                storePassword = "fnhqzst0hoFiM5CWNyj3Slmy7TJ1rwHC"
+                keyAlias = "pixelgotchi"
+                keyPassword = "fnhqzst0hoFiM5CWNyj3Slmy7TJ1rwHC"
             }
         }
     }
     buildTypes {
+        debug { signingConfig = signingConfigs.getByName("pixelgotchi") }
         release {
             isMinifyEnabled = false
-            signingConfig = if (System.getenv("PIXELGOTCHI_KEYSTORE") != null) signingConfigs.getByName("privateRelease") else null
+            signingConfig = signingConfigs.getByName("pixelgotchi")
         }
     }
     buildFeatures { compose = true }

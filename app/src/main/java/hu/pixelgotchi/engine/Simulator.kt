@@ -106,7 +106,7 @@ class Simulator {
         if (p.sleeping && p.light && !p.nightFault && now - p.sleepSince >= CARE_GRACE) {
             p.nightFault = true; p.mistakes++
         }
-        if (asleep && !p.sleeping) { p.sleepSince = now; p.nightFault = false }
+        if (asleep && !p.sleeping) { p.sleepSince = now; p.nightFault = false; p.game = null }
         if(!asleep && p.sleeping)p.wokeAt=now
         p.sleeping = asleep
         // Events earned during the preceding awake interval still occur exactly at bedtime.

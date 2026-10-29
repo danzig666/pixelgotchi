@@ -6,7 +6,7 @@ Magyar, teljesen offline Android-pixelállatjáték. Két külön profil, saját
 
 ## Telepítés
 
-**[A kész APK letöltése](https://github.com/danzig666/pixelgotchi/releases/download/v1.0.0/pixelgotchi-debug.apk)** · **[Teljes projekt ZIP](https://github.com/danzig666/pixelgotchi/releases/download/v1.0.0/pixelgotchi-source.zip)** · **[Képernyőképek](https://github.com/danzig666/pixelgotchi/releases/tag/v1.0.0)**
+**[A kész APK letöltése](https://github.com/danzig666/pixelgotchi/releases/latest/download/pixelgotchi-debug.apk)** · **[Teljes projekt ZIP](https://github.com/danzig666/pixelgotchi/releases/latest/download/pixelgotchi-source.zip)** · **[Képernyőképek](https://github.com/danzig666/pixelgotchi/releases/latest)**
 
 A GitHub **Actions → Android APK → sikeres futás → Artifacts → pixelgotchi-apk-and-reports** csomagban található az `app-debug.apk`. Ez **debug-aláírású, valóban telepíthető APK**, személyes használatra. A ZIP-et előbb bontsd ki. Androidon engedélyezd az APK-t megnyitó alkalmazás számára az ismeretlen alkalmazások telepítését. A release `app-release-unsigned.apk` aláírás előtt nem telepíthető.
 
@@ -68,9 +68,30 @@ Az első fordításhoz internet kell a fordítóeszközök és függőségek let
 .\gradlew.bat connectedDebugAndroidTest
 ```
 
-## Release aláírás
+## Frissítés a mentés megtartásával
 
-A forrás nem tartalmaz privát aláírókulcsot. Készíts saját kulcsot, és őrizd meg biztonságosan: az alkalmazás frissítéséhez ugyanaz kell. A debug és a saját release aláírás különbözik; azonos csomagnéven nem írhatják felül egymást. Az eltávolítás törli a mentést.
+Az 1.1.0-tól minden APK ugyanazzal a kulccsal van aláírva (lásd: Aláírás), így a következő verziók egyszerűen a meglévő fölé telepíthetők.
+
+Az 1.0.0 egy eldobható GitHub-kulccsal készült, ezért arról egyszer, kézzel kell átállni: az Android nem telepíti fölé az újabb verziót, az eltávolítás pedig törli a mentést. Mivel a debug APK hibakereshető, a mentés USB-hibakereséssel átmenthető. Parancssorban (`cmd`, nem PowerShell), a játékot előtte bezárva:
+
+```bat
+adb shell am force-stop hu.pixelgotchi
+adb exec-out run-as hu.pixelgotchi cat databases/pixelgotchi.db > pixelgotchi.db
+adb exec-out run-as hu.pixelgotchi cat databases/pixelgotchi.db-wal > pixelgotchi.db-wal
+adb uninstall hu.pixelgotchi
+adb install pixelgotchi-debug.apk
+adb push pixelgotchi.db pixelgotchi.db-wal /data/local/tmp/
+adb shell run-as hu.pixelgotchi sh -c "mkdir -p databases && cp /data/local/tmp/pixelgotchi.db /data/local/tmp/pixelgotchi.db-wal databases/"
+adb shell rm /data/local/tmp/pixelgotchi.db /data/local/tmp/pixelgotchi.db-wal
+```
+
+Az új verziót a visszamásolás előtt ne nyisd meg. Ha a `-wal` fájl nem létezik, hagyd ki a sorait. A mentés formátuma az 1.0.0 óta nem változott.
+
+## Aláírás
+
+Minden build, a GitHub Actions és a helyi fordítás is, a repóban lévő `signing/pixelgotchi.p12` kulccsal készül (alias: `pixelgotchi`, SHA-256: `d75ff9b443724ca4ffe457ddd1e98d8de3127133352c19527186ae9e98bdff93`). Ezért bármely új verzió a meglévő fölé telepíthető, a mentés megmarad. A kulcs szándékosan nyilvános: ez egy személyes, néhány eszközre telepített játék. Aki a repót látja, ugyanezzel a kulccsal aláírt APK-t készíthet, ezért csak innen származó APK-t telepíts.
+
+Saját, titkos kulccsal így fordíthatsz (ez felülírja a repóbelit, de az így aláírt APK a korábbiakat nem frissítheti):
 
 ```powershell
 keytool -genkeypair -v -keystore pixelgotchi-release.jks -alias pixelgotchi -keyalg RSA -keysize 4096 -validity 10000
@@ -80,10 +101,6 @@ $env:PIXELGOTCHI_KEY_ALIAS="pixelgotchi"
 $env:PIXELGOTCHI_KEY_PASSWORD="a-sajat-kulcsjelszavad"
 .\gradlew.bat assembleRelease
 ```
-
-A CI debug-aláírókulcsa futásonként változhat. Tartós, mentésvesztés nélküli kiadási frissítésekhez saját, megőrzött release-kulcsot használj.
-
-A kulcsot és jelszavakat ne commitold. CI-ben csak védett secretsből add át őket. Környezeti változók nélkül a release aláíratlan marad; a debug változat a fejlesztői kulccsal automatikusan aláíródik. Nyilvános, tartós kiadáshoz saját release kulcs ajánlott.
 
 ## Kezelés
 
