@@ -70,7 +70,7 @@ Az első fordításhoz internet kell a fordítóeszközök és függőségek let
 
 ## Frissítés a mentés megtartásával
 
-Az 1.1.0-tól minden kiadott APK ugyanazzal a tartós kulccsal van aláírva (SHA-256: `d75ff9b443724ca4ffe457ddd1e98d8de3127133352c19527186ae9e98bdff93`), így a következő verziók egyszerűen a meglévő fölé telepíthetők, a mentés megmarad.
+Az 1.1.0-tól minden APK ugyanazzal a kulccsal van aláírva (lásd: Aláírás), így a következő verziók egyszerűen a meglévő fölé telepíthetők.
 
 Az 1.0.0 egy eldobható GitHub-kulccsal készült, ezért arról egyszer, kézzel kell átállni: az Android nem telepíti fölé az újabb verziót, az eltávolítás pedig törli a mentést. Mivel a debug APK hibakereshető, a mentés USB-hibakereséssel átmenthető. Parancssorban (`cmd`, nem PowerShell), a játékot előtte bezárva:
 
@@ -87,9 +87,11 @@ adb shell rm /data/local/tmp/pixelgotchi.db /data/local/tmp/pixelgotchi.db-wal
 
 Az új verziót a visszamásolás előtt ne nyisd meg. Ha a `-wal` fájl nem létezik, hagyd ki a sorait. A mentés formátuma az 1.0.0 óta nem változott.
 
-## Release aláírás
+## Aláírás
 
-A forrás nem tartalmaz privát aláírókulcsot. Készíts saját kulcsot, és őrizd meg biztonságosan: az alkalmazás frissítéséhez ugyanaz kell. A debug és a saját release aláírás különbözik; azonos csomagnéven nem írhatják felül egymást. Az eltávolítás törli a mentést.
+Minden build, a GitHub Actions és a helyi fordítás is, a repóban lévő `signing/pixelgotchi.p12` kulccsal készül (alias: `pixelgotchi`, SHA-256: `d75ff9b443724ca4ffe457ddd1e98d8de3127133352c19527186ae9e98bdff93`). Ezért bármely új verzió a meglévő fölé telepíthető, a mentés megmarad. A kulcs szándékosan nyilvános: ez egy személyes, néhány eszközre telepített játék. Aki a repót látja, ugyanezzel a kulccsal aláírt APK-t készíthet, ezért csak innen származó APK-t telepíts.
+
+Saját, titkos kulccsal így fordíthatsz (ez felülírja a repóbelit, de az így aláírt APK a korábbiakat nem frissítheti):
 
 ```powershell
 keytool -genkeypair -v -keystore pixelgotchi-release.jks -alias pixelgotchi -keyalg RSA -keysize 4096 -validity 10000
@@ -99,10 +101,6 @@ $env:PIXELGOTCHI_KEY_ALIAS="pixelgotchi"
 $env:PIXELGOTCHI_KEY_PASSWORD="a-sajat-kulcsjelszavad"
 .\gradlew.bat assembleRelease
 ```
-
-A GitHub Actions a tartós kulcsot két repository secretből veszi: `PIXELGOTCHI_KEYSTORE_BASE64` (a PKCS12 kulcstár base64-ben) és `PIXELGOTCHI_KEYSTORE_PASSWORD`. Ilyenkor a debug és a release APK is ezzel a kulccsal készül. A kiadás csak akkor jön létre, ha az APK tanúsítványa a fenti SHA-256 lenyomatú. Secretek nélkül (például forkban) a debug APK eldobható kulccsal, a release aláíratlanul készül.
-
-A kulcsot és jelszavakat ne commitold. A kulcstárat és a jelszót őrizd meg biztonságos helyen: elvesztésük után a meglévő telepítések már nem frissíthetők.
 
 ## Kezelés
 

@@ -13,8 +13,8 @@ Letöltés és telepítés:
 - pixelgotchi-debug.apk: telepíthető, debug-aláírású alkalmazás telefonra és tabletre.
 - pixelgotchi-source.zip: teljes Android Studio-projekt, Gradle Wrapperrel, saját grafikával/hanggal, magyar útmutatóval és tesztekkel.
 
-Fontos: a debug-aláírás minden GitHub-futásnál más. Az Android ezért ezt az APK-t nem telepíti frissítésként egy korábbi kiadás fölé; a korábbi verziót előbb el kell távolítani, ami törli a mentést. A mentés átmentéséhez lásd a README-t.
+Fontos: az 1.1.0-tól minden APK ugyanazzal, a repóban tárolt kulccsal készül, így a későbbi verziók a mentés megtartásával telepíthetők fölé. Az 1.0.0 eldobható kulccsal készült; arról egyszer kézzel kell átállni, a mentés átmentését a README írja le.
 
-Fordítás: API 37, minSdk 24, JDK 17, AGP 9.4.0, Gradle 9.6.0. A saját release-aláírás lépései a README-ben szerepelnek; privát release-kulcs nincs a forrásban.
+Fordítás: API 37, minSdk 24, JDK 17, AGP 9.4.0, Gradle 9.6.0. Az aláírás részletei a README-ben szerepelnek.
 
 A PNG-k valódi emulátoros képernyőképek; a JVM- és eszköztesztek eredménye a lent linkelt GitHub-futásban található.

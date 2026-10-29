@@ -16,24 +16,28 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
-        create("privateRelease") {
+        // The project's shared key lives in the repo on purpose: every build, local or CI, can update the installed game.
+        // Set PIXELGOTCHI_KEYSTORE (and the matching passwords) to sign with a private key instead.
+        create("pixelgotchi") {
             val keyPath = System.getenv("PIXELGOTCHI_KEYSTORE")
             if (keyPath != null) {
                 storeFile = file(keyPath)
                 storePassword = System.getenv("PIXELGOTCHI_STORE_PASSWORD")
                 keyAlias = System.getenv("PIXELGOTCHI_KEY_ALIAS")
                 keyPassword = System.getenv("PIXELGOTCHI_KEY_PASSWORD")
+            } else {
+                storeFile = rootProject.file("signing/pixelgotchi.p12")
+                storePassword = "fnhqzst0hoFiM5CWNyj3Slmy7TJ1rwHC"
+                keyAlias = "pixelgotchi"
+                keyPassword = "fnhqzst0hoFiM5CWNyj3Slmy7TJ1rwHC"
             }
         }
     }
     buildTypes {
-        // With the permanent key present, debug builds share it too, so every published APK updates the last one.
-        debug {
-            if (System.getenv("PIXELGOTCHI_KEYSTORE") != null) signingConfig = signingConfigs.getByName("privateRelease")
-        }
+        debug { signingConfig = signingConfigs.getByName("pixelgotchi") }
         release {
             isMinifyEnabled = false
-            signingConfig = if (System.getenv("PIXELGOTCHI_KEYSTORE") != null) signingConfigs.getByName("privateRelease") else null
+            signingConfig = signingConfigs.getByName("pixelgotchi")
         }
     }
     buildFeatures { compose = true }
