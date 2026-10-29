@@ -68,6 +68,23 @@ Az első fordításhoz internet kell a fordítóeszközök és függőségek let
 .\gradlew.bat connectedDebugAndroidTest
 ```
 
+## Frissítés a mentés megtartásával
+
+A GitHub-on készült debug APK-k minden futásnál új, eldobható kulccsal kapnak aláírást. Az Android ezért nem telepíti őket frissítésként egy korábbi kiadás fölé, az eltávolítás pedig törli a mentést. Mivel a debug APK hibakereshető, a mentés USB-hibakereséssel átmenthető. Parancssorban (`cmd`, nem PowerShell), a játékot előtte bezárva:
+
+```bat
+adb shell am force-stop hu.pixelgotchi
+adb exec-out run-as hu.pixelgotchi cat databases/pixelgotchi.db > pixelgotchi.db
+adb exec-out run-as hu.pixelgotchi cat databases/pixelgotchi.db-wal > pixelgotchi.db-wal
+adb uninstall hu.pixelgotchi
+adb install pixelgotchi-debug.apk
+adb push pixelgotchi.db pixelgotchi.db-wal /data/local/tmp/
+adb shell run-as hu.pixelgotchi sh -c "mkdir -p databases && cp /data/local/tmp/pixelgotchi.db /data/local/tmp/pixelgotchi.db-wal databases/"
+adb shell rm /data/local/tmp/pixelgotchi.db /data/local/tmp/pixelgotchi.db-wal
+```
+
+Az új verziót a visszamásolás előtt ne nyisd meg. Ha a `-wal` fájl nem létezik, hagyd ki a sorait. A mentés formátuma az 1.0.0 óta nem változott.
+
 ## Release aláírás
 
 A forrás nem tartalmaz privát aláírókulcsot. Készíts saját kulcsot, és őrizd meg biztonságosan: az alkalmazás frissítéséhez ugyanaz kell. A debug és a saját release aláírás különbözik; azonos csomagnéven nem írhatják felül egymást. Az eltávolítás törli a mentést.
