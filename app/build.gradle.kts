@@ -27,6 +27,10 @@ android {
         }
     }
     buildTypes {
+        // With the permanent key present, debug builds share it too, so every published APK updates the last one.
+        debug {
+            if (System.getenv("PIXELGOTCHI_KEYSTORE") != null) signingConfig = signingConfigs.getByName("privateRelease")
+        }
         release {
             isMinifyEnabled = false
             signingConfig = if (System.getenv("PIXELGOTCHI_KEYSTORE") != null) signingConfigs.getByName("privateRelease") else null

@@ -70,7 +70,9 @@ Az első fordításhoz internet kell a fordítóeszközök és függőségek let
 
 ## Frissítés a mentés megtartásával
 
-A GitHub-on készült debug APK-k minden futásnál új, eldobható kulccsal kapnak aláírást. Az Android ezért nem telepíti őket frissítésként egy korábbi kiadás fölé, az eltávolítás pedig törli a mentést. Mivel a debug APK hibakereshető, a mentés USB-hibakereséssel átmenthető. Parancssorban (`cmd`, nem PowerShell), a játékot előtte bezárva:
+Az 1.1.0-tól minden kiadott APK ugyanazzal a tartós kulccsal van aláírva (SHA-256: `d75ff9b443724ca4ffe457ddd1e98d8de3127133352c19527186ae9e98bdff93`), így a következő verziók egyszerűen a meglévő fölé telepíthetők, a mentés megmarad.
+
+Az 1.0.0 egy eldobható GitHub-kulccsal készült, ezért arról egyszer, kézzel kell átállni: az Android nem telepíti fölé az újabb verziót, az eltávolítás pedig törli a mentést. Mivel a debug APK hibakereshető, a mentés USB-hibakereséssel átmenthető. Parancssorban (`cmd`, nem PowerShell), a játékot előtte bezárva:
 
 ```bat
 adb shell am force-stop hu.pixelgotchi
@@ -98,9 +100,9 @@ $env:PIXELGOTCHI_KEY_PASSWORD="a-sajat-kulcsjelszavad"
 .\gradlew.bat assembleRelease
 ```
 
-A CI debug-aláírókulcsa futásonként változhat. Tartós, mentésvesztés nélküli kiadási frissítésekhez saját, megőrzött release-kulcsot használj.
+A GitHub Actions a tartós kulcsot két repository secretből veszi: `PIXELGOTCHI_KEYSTORE_BASE64` (a PKCS12 kulcstár base64-ben) és `PIXELGOTCHI_KEYSTORE_PASSWORD`. Ilyenkor a debug és a release APK is ezzel a kulccsal készül. A kiadás csak akkor jön létre, ha az APK tanúsítványa a fenti SHA-256 lenyomatú. Secretek nélkül (például forkban) a debug APK eldobható kulccsal, a release aláíratlanul készül.
 
-A kulcsot és jelszavakat ne commitold. CI-ben csak védett secretsből add át őket. Környezeti változók nélkül a release aláíratlan marad; a debug változat a fejlesztői kulccsal automatikusan aláíródik. Nyilvános, tartós kiadáshoz saját release kulcs ajánlott.
+A kulcsot és jelszavakat ne commitold. A kulcstárat és a jelszót őrizd meg biztonságos helyen: elvesztésük után a meglévő telepítések már nem frissíthetők.
 
 ## Kezelés
 

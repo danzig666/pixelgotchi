@@ -27,6 +27,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Install API 37
         run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0'
+      - name: Permanent signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.PIXELGOTCHI_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.PIXELGOTCHI_KEYSTORE_PASSWORD }}
+        # Absent on forks and before the secrets are added; the build then falls back to a throwaway debug key.
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then echo "No permanent key configured"; exit 0; fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/pixelgotchi-release.p12"
+          {
+            echo "PIXELGOTCHI_KEYSTORE=$RUNNER_TEMP/pixelgotchi-release.p12"
+            echo "PIXELGOTCHI_STORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "PIXELGOTCHI_KEY_ALIAS=pixelgotchi"
+            echo "PIXELGOTCHI_KEY_PASSWORD=$KEYSTORE_PASSWORD"
+          } >> "$GITHUB_ENV"
       - name: Test, lint and compile
         run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease assembleDebugAndroidTest --stacktrace
       - name: APK and reports

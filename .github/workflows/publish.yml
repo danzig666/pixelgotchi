@@ -32,6 +32,12 @@ jobs:
           gh run download "$RUN" -n pixelgotchi-apk-and-reports -D artifacts/build
           gh run download "$RUN" -n device-api-37.0 -D artifacts/device
           echo "RUN=$RUN" >> "$GITHUB_ENV"
+      - name: Require the permanent signing key
+        # A throwaway-key APK could never be updated in place, so it is never released.
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs artifacts/build/outputs/apk/debug/app-debug.apk | tee certs.txt
+          grep -q "certificate SHA-256 digest: d75ff9b443724ca4ffe457ddd1e98d8de3127133352c19527186ae9e98bdff93" certs.txt
       - name: Package release
         run: |
           mkdir -p release
