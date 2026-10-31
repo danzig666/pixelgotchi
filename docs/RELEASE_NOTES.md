@@ -1,5 +1,8 @@
 Lili és Léna teljesen magyar, offline pixelállatjátéka Android 7.0–17 rendszerre.
 
+Javítás az 1.1.1-ben:
+- Fekvő tableten a készülék teljes egészében látszik, nem lóg ki a képernyő tetején; csak a mellette lévő adatok görgethetők. Álló tableten a telefonos, egyoszlopos elrendezés jelenik meg.
+
 Újdonságok az 1.1.0-ban:
 - Új készülékház: minden felirat és gomb a házon belül marad, keskeny telefonon és nagy betűmérettel is.
 - A hét gondozási ikon és a figyelemjelző a kijelzőre került, mint az eredeti játékban. Pixeles szívek, fényes gombok, színes háttér.
