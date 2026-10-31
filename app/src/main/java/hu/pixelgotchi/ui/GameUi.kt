@@ -19,6 +19,9 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.layout.layout
+import kotlin.math.roundToInt
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -162,10 +165,13 @@ private val shellShape=object: Shape {
                 } else if(p==null) Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(24.dp)) {
                     Heading(stringResource(R.string.profile_of,profile!!));PetCanvas(null,Modifier.fillMaxWidth().height(180.dp));Text(word(R.string.new_friend));ActionButton(R.string.start,{modal="name"})
                 } else BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-                    val wide=maxWidth>=800.dp
-                    if(wide) Row(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),horizontalArrangement=Arrangement.spacedBy(28.dp),verticalAlignment=Alignment.CenterVertically) {
-                        Device(p,world!!.preferences.colors[profile] ?: 0,selected,feedback,Modifier.weight(1f),busy,::perform,{selected=(selected+1)%7;click()},{if(!busy)perform(selected)},{if(p.game!=null)vm.act(p,Action.CANCEL_GAME) else {profile=null;vm.feedback.value=null}}, {modal="attention"})
-                        Column(Modifier.weight(.65f),verticalArrangement=Arrangement.spacedBy(18.dp)) {
+                    val wide=maxWidth>=800.dp && maxWidth>maxHeight
+                    // Side by side, the whole device stays on screen; only the stats column scrolls.
+                    if(wide) Row(Modifier.fillMaxSize().padding(20.dp),horizontalArrangement=Arrangement.spacedBy(28.dp)) {
+                        Box(Modifier.weight(1f).fillMaxHeight(),contentAlignment=Alignment.Center) {
+                            Device(p,world!!.preferences.colors[profile] ?: 0,selected,feedback,Modifier.fitHeight(),busy,::perform,{selected=(selected+1)%7;click()},{if(!busy)perform(selected)},{if(p.game!=null)vm.act(p,Action.CANCEL_GAME) else {profile=null;vm.feedback.value=null}}, {modal="attention"})
+                        }
+                        Column(Modifier.weight(.65f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical=8.dp),verticalArrangement=Arrangement.spacedBy(18.dp)) {
                             Heading(p.name);Stats(p)
                             if(!p.alive)DeathDetails(p,{modal="restart"})
                             ActionButton(R.string.album,{vm.album(profile!!);modal="album"})
@@ -264,6 +270,14 @@ private fun shellBrush(c: Color)=Brush.linearGradient(listOf(Color(.5f+c.red/2,.
                 }
             }
         }
+    }
+}
+/** Shrinks the content uniformly to the available height instead of letting it run off screen. */
+private fun Modifier.fitHeight()=layout { measurable,constraints ->
+    val placeable=measurable.measure(constraints.copy(minWidth=0,minHeight=0,maxHeight=Constraints.Infinity))
+    val scale=if(constraints.hasBoundedHeight && placeable.height>constraints.maxHeight)constraints.maxHeight.toFloat()/placeable.height else 1f
+    layout((placeable.width*scale).roundToInt(),(placeable.height*scale).roundToInt()) {
+        placeable.placeRelativeWithLayer(0,0) { scaleX=scale;scaleY=scale;transformOrigin=TransformOrigin(0f,0f) }
     }
 }
 @Composable private fun IconRow(range: IntRange,p: Pet,selected: Int,busy: Boolean,screen: Color,perform:(Int)->Unit,attention:()->Unit) {
