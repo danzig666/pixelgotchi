@@ -140,7 +140,8 @@ class Simulator {
         if (!p.alive) return Feedback.DEAD
         if (action == Action.LIGHT) { p.light = !p.light; return Feedback.LIGHT }
         if (p.stage == Stage.EGG) return Feedback.EGG
-        if (p.sleeping) return Feedback.SLEEPING
+        // Care still reaches a sleeping pet, so an evening illness or hunger can be handled before morning.
+        if (p.sleeping && action in listOf(Action.TEACH, Action.START_GAME)) return Feedback.SLEEPING
         val feedback = when(action) {
             Action.MEAL -> if (p.food == 4) Feedback.FULL else { p.food++; p.weight++; Feedback.MEAL }
             Action.SNACK -> { p.joy = minOf(4, p.joy + 1); p.weight += 2; p.snacks++; Feedback.SNACK }

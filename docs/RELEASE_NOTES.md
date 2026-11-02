@@ -1,5 +1,9 @@
 Lili és Léna teljesen magyar, offline pixelállatjátéka Android 7.0–17 rendszerre.
 
+Javítás az 1.1.2-ben:
+- Alvás közben is lehet etetni, nasit adni, takarítani és gyógyszert adni, így egy esti betegség vagy éhség még reggel előtt rendbe hozható. Játszani és tanítani továbbra is csak ébren lehet.
+- Alvás közben a kijelző kiírja, ha a kisállat beteg, éhes vagy takarítani kell nála.
+
 Javítás az 1.1.1-ben:
 - Fekvő tableten a készülék teljes egészében látszik, nem lóg ki a képernyő tetején; csak a mellette lévő adatok görgethetők. Álló tableten a telefonos, egyoszlopos elrendezés jelenik meg.
 
