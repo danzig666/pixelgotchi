@@ -69,6 +69,16 @@ class SimulatorTest {
         sim.advance(p,bedtime+10*h+30*m);assertFalse(p.sleeping);assertEquals(p.processedAt,p.wokeAt);assertTrue(p.sick);assertEquals(0,p.food);assertEquals(3,p.poop);assertEquals(health,p.healthUnits)
         sim.act(p,p.processedAt,Action.LIGHT);sim.advance(p,p.processedAt+h);assertEquals(health-10*h,p.healthUnits)
     }
+    @Test fun sleepingPetCanBeFedCleanedAndCuredButNotTaughtOrPlayed() {
+        val p=pet();val bedtime=start+13*h+30*m;sim.advance(p,bedtime);assertTrue(p.sleeping)
+        p.sick=true;p.food=0;p.poop=2
+        assertEquals(Feedback.MEAL,sim.act(p,bedtime+m,Action.MEAL));assertEquals(1,p.food)
+        assertEquals(Feedback.CLEAN,sim.act(p,bedtime+m,Action.CLEAN));assertEquals(0,p.poop)
+        assertEquals(Feedback.CURED,sim.act(p,bedtime+m,Action.MEDICINE));assertFalse(p.sick)
+        assertEquals(Feedback.SLEEPING,sim.act(p,bedtime+m,Action.START_GAME));assertNull(p.game)
+        p.falseCall=true;assertEquals(Feedback.SLEEPING,sim.act(p,bedtime+m,Action.TEACH));assertEquals(0,p.training)
+        assertTrue(p.sleeping)
+    }
     @Test fun deathIsPermanentAndActionsCannotSaveRetroactively() {
         val p=pet();assertEquals(Feedback.DEAD,sim.act(p,start+7*24*h,Action.MEAL));val dead=copy(p)
         sim.act(p,start+8*24*h,Action.MEDICINE);sim.advance(p,start-h);same(dead,p)

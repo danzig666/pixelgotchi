@@ -12,7 +12,9 @@ fun causeText(cause: DeathCause?)=when(cause) {
     DeathCause.BOTH->R.string.cause_both;else->R.string.cause_age
 }
 fun stateText(p: Pet)=when {
-    !p.alive->R.string.remember;p.stage==Stage.EGG->R.string.state_egg;p.sleeping->R.string.state_sleep
+    !p.alive->R.string.remember;p.stage==Stage.EGG->R.string.state_egg
+    p.sleeping && p.sick->R.string.state_sleep_sick;p.sleeping && p.food==0->R.string.state_sleep_hungry
+    p.sleeping && p.poop>0->R.string.state_sleep_dirty;p.sleeping->R.string.state_sleep
     p.sick->R.string.state_sick;p.food==0->R.string.state_hungry;p.joy==0->R.string.state_sad
     p.poop>0->R.string.state_dirty;p.falseCall->R.string.state_call;!p.light->R.string.state_dark
     p.wokeAt>0 && p.processedAt-p.wokeAt<GameBalance.CARE_GRACE->R.string.state_wake;else->R.string.state_good

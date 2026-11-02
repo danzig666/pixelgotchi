@@ -47,6 +47,9 @@
     <string name="stage_elder">Idős állat</string>
     <string name="state_egg">Nemsokára kikelek!</string>
     <string name="state_sleep">Most alszom.</string>
+    <string name="state_sleep_sick">Alszom, de beteg vagyok. Adj gyógyszert!</string>
+    <string name="state_sleep_hungry">Alszom, de éhes vagyok.</string>
+    <string name="state_sleep_dirty">Alszom. Takaríts ki nálam!</string>
     <string name="state_sick">Beteg vagyok.</string>
     <string name="state_hungry">Éhes vagyok.</string>
     <string name="state_sad">Játsszunk egyet!</string>
@@ -99,7 +102,7 @@
     <string name="f_taught">Köszönöm, tanultam belőle!</string>
     <string name="f_no_call">Most nincs mit tanítani.</string>
     <string name="f_need_care">Előbb gondoskodj rólam!</string>
-    <string name="f_sleep">Most alszom. Reggel gondozhatsz.</string>
+    <string name="f_sleep">Most alszom. Játszani és tanulni reggel lehet.</string>
     <string name="f_egg">Még a tojásban vagyok.</string>
     <string name="f_dead">Ez a kisállat már meghalt.</string>
     <string name="f_cancelled">A játék megszakadt.</string>

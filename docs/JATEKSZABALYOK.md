@@ -20,7 +20,7 @@ Ezek a család napirendjéhez választott saját szabályok, nem a Bandai eredet
 | Takarítás | Minden ürüléket és a koszkitettségi időt eltávolít; nem gyógyít |
 | Felépülés | Legalább 2 étel, 1 jókedv, tisztaság, betegségmentesség: 1 stabil ébren töltött óra után +2 életerő/óra |
 | Elhanyagolás miatti halál | Életerő 0, az adott károsodási szakaszon belül pontos időponttal |
-| Alvás | 20:30–07:00 a mentett időzónában; éhség/jókedv/kosz/betegségkárosodás/felépülés szünetel |
+| Alvás | 20:30–07:00 a mentett időzónában; éhség/jókedv/kosz/betegségkárosodás/felépülés szünetel. Alvás közben is lehet etetni, nasit adni, takarítani és gyógyszert adni; játszani és tanítani csak ébren |
 | Bekapcsolt lámpa | Elalvás után 30 valós perc elteltével 1 gondozási hiba/éjszaka, egészségkár nélkül |
 
 A fogyási ciklusok maradékát az etetés és a játék nem nullázza. Egészséges állatnak adott gyógyszer nem nullázza a koszkitettséget. Valós gyógyítás után bent maradt kosznál új négyórás fertőzési idő indul. A felépülés várakozása éjszaka szünetel és reggel folytatódik. A lámpa nem módosítja a napirendet.
